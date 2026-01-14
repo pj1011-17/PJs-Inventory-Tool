@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>門市盤點系統 (極速版)</title>
+    <title>盤點小工具 2.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -39,11 +39,13 @@
         .item-card.error { border-left-color: var(--danger); background-color: #fef2f2; }
         .item-card.todo { border-left-color: #9ca3af; }
         
+        /* 字體調整 */
         .item-info h3 { margin: 0 0 5px 0; font-size: 16px; }
-        .item-info p { margin: 0; font-size: 13px; color: #6b7280; }
+        .item-info p { margin: 0; font-size: 15px; color: #4b5563; font-weight: 500; } 
+        
         .item-count { text-align: right; }
         .count-badge { font-size: 18px; font-weight: bold; }
-        .system-count { font-size: 12px; color: #9ca3af; }
+        .system-count { font-size: 16px; color: #9ca3af; margin-top: 2px; } 
         
         /* 彈窗優化 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: flex-end; }
@@ -61,13 +63,13 @@
         .btn-quick-correct { width: 100%; padding: 12px; background: var(--warning); color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
         .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .fab { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; border: none; font-size: 24px; }
+        /* 移除 .fab 樣式 */
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>📦 門市盤點系統 Pro</h1>
+    <h1>📦 盤點小工具 2.0</h1>
     <button class="btn-sm" onclick="resetAll()">重置</button>
 </div>
 
@@ -95,16 +97,14 @@
 </div>
 
 <div class="search-box">
-    <input type="text" class="search-input" placeholder="🔍 輸入代號後幾碼或品名..." oninput="filterList(this.value)">
+    <input type="text" class="search-input" inputmode="numeric" placeholder="🔍 輸入代號後幾碼或品名..." oninput="filterList(this.value)">
 </div>
 
 <div class="item-list" id="itemList">
     <div style="text-align:center; color:#999; padding: 20px;">
-        請先匯入公司系統 Excel
+        請先匯入盤點系統 Excel
     </div>
 </div>
-
-<button class="fab" onclick="exportExcel()">💾</button>
 
 <div class="modal-overlay" id="editModal">
     <div class="modal">
@@ -112,7 +112,7 @@
         <div class="modal-subtitle">系統應有: <span id="modalSysStock">0</span></div>
         
         <button class="btn-quick-correct" onclick="quickCorrect()">
-            ⚡ 一鍵正確 (直接儲存 <span id="btnSysQty">0</span>)
+            ⚡ 一鍵正確 (直接輸入 <span id="btnSysQty">0</span>)
         </button>
 
         <div class="modal-input-group">
@@ -204,7 +204,6 @@
             item.name.toLowerCase().includes(filterText.toLowerCase())
         );
 
-        // 如果是未盤點模式：只顯示 (沒盤過) 或 (盤過但數量不符)
         if (filterMode === 'unfinished') {
             filtered = filtered.filter(item => !(item.counted && item.actQty === item.sysQty));
         }
@@ -233,7 +232,7 @@
                 badgeColor = (item.actQty === item.sysQty) ? 'green' : 'red';
             }
 
-            div.innerHTML = `<div class="item-info"><h3>${item.name}</h3><p>代號: ${item.code}</p></div><div class="item-count"><span class="count-badge" style="color:${badgeColor}">${countDisplay}</span><div class="system-count">/ ${item.sysQty}</div></div>`;
+            div.innerHTML = `<div class="item-info"><h3>${item.name}</h3><p>${item.code}</p></div><div class="item-count"><span class="count-badge" style="color:${badgeColor}">${countDisplay}</span><div class="system-count">/ ${item.sysQty}</div></div>`;
             container.appendChild(div);
         });
         updateStats();
@@ -251,7 +250,7 @@
         const item = inventoryData[index];
         document.getElementById('modalTitle').innerText = item.name;
         document.getElementById('modalSysStock').innerText = item.sysQty;
-        document.getElementById('btnSysQty').innerText = item.sysQty; // 更新按鈕上的庫存數字
+        document.getElementById('btnSysQty').innerText = item.sysQty; 
         
         const initVal = item.counted ? item.actQty : 1; 
         document.getElementById('modalQty').value = initVal;
@@ -260,16 +259,11 @@
         setTimeout(() => document.getElementById('modalQty').focus(), 100);
     }
 
-    // 修改後：一鍵正確並儲存
     function quickCorrect() {
         if (currentEditIndex === -1) return;
         const item = inventoryData[currentEditIndex];
-        
-        // 1. 強制設定為系統庫存
         item.actQty = item.sysQty;
         item.counted = true;
-
-        // 2. 存檔、關閉、刷新列表 (會自動移出未盤點分頁)
         closeModal();
         renderList(document.querySelector('.search-input').value);
         updateStats();
@@ -324,16 +318,6 @@
         html5QrCode.pause();
         const index = inventoryData.findIndex(item => item.code === decodedText);
         if (index !== -1) { openEditModal(index); } else { alert(`找不到代號：${decodedText}`); html5QrCode.resume(); }
-    }
-
-    function exportExcel() {
-        if (inventoryData.length === 0) { alert('沒有資料可匯出'); return; }
-        const exportData = inventoryData.map(item => ({ '產品代號': item.code, '產品名稱': item.name, '分倉存量(系統)': item.sysQty, '實際盤點': item.counted ? item.actQty : '', '差異數': item.counted ? (item.actQty - item.sysQty) : '' }));
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "盤點結果");
-        const date = new Date().toISOString().slice(0,10);
-        XLSX.writeFile(wb, `盤點結果_${date}.xlsx`);
     }
 
     function resetAll() {
