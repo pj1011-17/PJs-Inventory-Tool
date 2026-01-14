@@ -3,26 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>盤點小工具 1.0</title>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" 
-            onload="console.log('XLSX Loaded')" 
-            onerror="alert('❌ 嚴重錯誤：Excel 功能庫載入失敗！\n\n請檢查您的網路，或公司 Wi-Fi 是否阻擋了 cdnjs 網站。')"></script>
-            
-    <script src="https://unpkg.com/html5-qrcode" 
-            onload="console.log('QRCode Loaded')" 
-            onerror="alert('❌ 嚴重錯誤：掃描功能庫載入失敗！\n\n請檢查您的網路，或切換至 4G 測試。')"></script>
-
+    <title>門市盤點系統 (極速版)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        :root { --primary: #2563eb; --success: #22c55e; --danger: #ef4444; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
+        :root { --primary: #2563eb; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 80px; }
+        
+        /* 佈局樣式 */
         .header { background: var(--primary); color: white; padding: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
         .header h1 { margin: 0; font-size: 18px; font-weight: 600; }
         .btn-sm { background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 15px; }
-        .stat-card { background: var(--card); padding: 10px; border-radius: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .stat-num { font-size: 20px; font-weight: bold; display: block; }
-        .stat-label { font-size: 12px; color: #6b7280; }
+        
+        /* 儀表板 */
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+        .stat-card { background: var(--card); padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .stat-card.active { border-color: var(--primary); background-color: #eff6ff; }
+        .stat-num { font-size: 24px; font-weight: bold; display: block; margin-bottom: 5px; }
+        .stat-label { font-size: 14px; color: #6b7280; font-weight: 500; }
+
         .actions { padding: 0 15px; display: flex; gap: 10px; }
         .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-scan { background: var(--text); color: white; }
@@ -30,24 +29,37 @@
         .btn-file { background: var(--primary); color: white; position: relative; overflow: hidden; }
         .btn-file input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
         #reader { width: 100%; margin-bottom: 10px; display: none; background: black; }
+        
+        /* 列表樣式 */
         .search-box { padding: 15px; }
         .search-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         .item-list { padding: 0 15px; }
         .item-card { background: var(--card); padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .item-card.done { border-left-color: var(--success); }
         .item-card.error { border-left-color: var(--danger); background-color: #fef2f2; }
+        .item-card.todo { border-left-color: #9ca3af; }
+        
         .item-info h3 { margin: 0 0 5px 0; font-size: 16px; }
         .item-info p { margin: 0; font-size: 13px; color: #6b7280; }
         .item-count { text-align: right; }
         .count-badge { font-size: 18px; font-weight: bold; }
         .system-count { font-size: 12px; color: #9ca3af; }
+        
+        /* 彈窗優化 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: flex-end; }
-        .modal { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; box-sizing: border-box; animation: slideUp 0.3s ease; }
+        .modal { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; box-sizing: border-box; animation: slideUp 0.3s ease; max-width: 100vw; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
         .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
         .modal-subtitle { font-size: 14px; color: #666; margin-bottom: 15px; }
-        .modal-input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        .qty-input { flex: 1; padding: 15px; font-size: 24px; text-align: center; border: 2px solid var(--primary); border-radius: 8px; }
+        
+        .modal-input-group { display: flex; gap: 8px; margin-bottom: 15px; width: 100%; box-sizing: border-box; }
+        .btn-adjust { flex: 0 0 60px; height: 50px; font-size: 20px; background: #eee; border: none; border-radius: 8px; cursor: pointer; }
+        .qty-input { flex: 1; min-width: 0; height: 50px; font-size: 24px; text-align: center; border: 2px solid var(--primary); border-radius: 8px; box-sizing: border-box; }
+        
+        /* 一鍵正確按鈕 */
+        .btn-quick-correct { width: 100%; padding: 12px; background: var(--warning); color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
         .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .fab { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; border: none; font-size: 24px; }
     </style>
@@ -55,24 +67,20 @@
 <body>
 
 <div class="header">
-    <h1>📦盤點小工具 1.0</h1>
+    <h1>📦 門市盤點系統 Pro</h1>
     <button class="btn-sm" onclick="resetAll()">重置</button>
 </div>
 
 <div id="reader"></div>
 
 <div class="dashboard">
-    <div class="stat-card">
+    <div class="stat-card active" id="tabAll" onclick="setFilterMode('all')">
         <span class="stat-num" id="totalItems">0</span>
         <span class="stat-label">總品項</span>
     </div>
-    <div class="stat-card">
-        <span class="stat-num" style="color:var(--success)" id="countedItems">0</span>
-        <span class="stat-label">已盤點</span>
-    </div>
-    <div class="stat-card">
-        <span class="stat-num" style="color:var(--danger)" id="diffItems">0</span>
-        <span class="stat-label">異常</span>
+    <div class="stat-card" id="tabUnfinished" onclick="setFilterMode('unfinished')">
+        <span class="stat-num" style="color:var(--danger)" id="unfinishedItems">0</span>
+        <span class="stat-label">未盤 / 差異</span>
     </div>
 </div>
 
@@ -102,11 +110,17 @@
     <div class="modal">
         <div class="modal-title" id="modalTitle">商品名稱</div>
         <div class="modal-subtitle">系統應有: <span id="modalSysStock">0</span></div>
+        
+        <button class="btn-quick-correct" onclick="quickCorrect()">
+            ⚡ 一鍵正確 (直接儲存 <span id="btnSysQty">0</span>)
+        </button>
+
         <div class="modal-input-group">
-            <button class="btn" style="background:#eee; flex:0.5;" onclick="adjustQty(-1)">-1</button>
-            <input type="number" id="modalQty" class="qty-input" value="0" onclick="this.select()">
-            <button class="btn" style="background:#eee; flex:0.5;" onclick="adjustQty(1)">+1</button>
+            <button class="btn-adjust" onclick="adjustQty(-1)">-1</button>
+            <input type="number" id="modalQty" class="qty-input" value="0" inputmode="numeric" pattern="[0-9]*" onclick="this.select()">
+            <button class="btn-adjust" onclick="adjustQty(1)">+1</button>
         </div>
+        
         <div class="modal-btns">
             <button class="btn" style="background: #9ca3af; color: white;" onclick="closeModal()">取消</button>
             <button class="btn" style="background: var(--primary); color: white;" onclick="saveQty()">確認</button>
@@ -115,18 +129,12 @@
 </div>
 
 <script>
-    // 除錯：全域錯誤監聽
-    window.onerror = function(msg, url, line) {
-        alert("⚠️ 程式發生錯誤：\n" + msg + "\n行數：" + line);
-        return false;
-    };
-
     let inventoryData = [];
     let html5QrCode;
     let isScanning = false;
     let currentEditIndex = -1;
+    let filterMode = 'all';
 
-    // 系統欄位設定
     const SYSTEM_COLUMNS = {
         code: ['產品代號'], 
         name: ['產品名稱'], 
@@ -141,82 +149,101 @@
     }
 
     function handleFile(input) {
-        try {
-            if (typeof XLSX === 'undefined') {
-                alert('錯誤：Excel 功能庫尚未載入，請檢查網路連線！');
-                return;
+        const file = input.files[0];
+        if (!file) return;
+        const fileDate = new Date(file.lastModified).toLocaleString('zh-TW', { hour12: false });
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheetName = workbook.SheetNames[0]; 
+                const sheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(sheet);
+                
+                inventoryData = json.map(row => {
+                    const rawCode = getValue(row, SYSTEM_COLUMNS.code);
+                    const rawName = getValue(row, SYSTEM_COLUMNS.name);
+                    const rawQty  = getValue(row, SYSTEM_COLUMNS.qty);
+                    let cleanQty = 0;
+                    if (rawQty) cleanQty = Math.floor(Number(rawQty)); 
+                    return {
+                        code: rawCode ? String(rawCode).trim() : '', 
+                        name: rawName ? String(rawName).trim() : '未命名商品',
+                        sysQty: cleanQty,
+                        actQty: 0, 
+                        counted: false 
+                    };
+                }).filter(item => item.code !== '');
+
+                setFilterMode('all');
+                alert(`✅ 匯入成功！\n\n📄 檔名：${file.name}\n📅 檔案日期：${fileDate}\n📦 商品項目：${inventoryData.length} 筆`);
+            } catch(err) {
+                alert("匯入失敗，請確認檔案格式");
             }
+        };
+        reader.readAsArrayBuffer(file);
+        input.value = ''; 
+    }
 
-            const file = input.files[0];
-            if (!file) return;
-
-            const fileDate = new Date(file.lastModified).toLocaleString('zh-TW', { hour12: false });
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const sheetName = workbook.SheetNames[0]; 
-                    const sheet = workbook.Sheets[sheetName];
-                    const json = XLSX.utils.sheet_to_json(sheet);
-                    
-                    inventoryData = json.map(row => {
-                        const rawCode = getValue(row, SYSTEM_COLUMNS.code);
-                        const rawName = getValue(row, SYSTEM_COLUMNS.name);
-                        const rawQty  = getValue(row, SYSTEM_COLUMNS.qty);
-                        let cleanQty = 0;
-                        if (rawQty) cleanQty = Math.floor(Number(rawQty)); 
-                        return {
-                            code: rawCode ? String(rawCode).trim() : '', 
-                            name: rawName ? String(rawName).trim() : '未命名商品',
-                            sysQty: cleanQty,
-                            actQty: 0, 
-                            counted: false 
-                        };
-                    }).filter(item => item.code !== '');
-
-                    if (inventoryData.length === 0) {
-                        alert("⚠️ 匯入失敗：\n找不到資料，請檢查您的 Excel 標題欄位是否為：\n「產品代號」、「產品名稱」、「分倉存量」");
-                    } else {
-                        renderList();
-                        updateStats();
-                        alert(`✅ 匯入成功！\n\n📄 檔名：${file.name}\n📦 成功讀取：${inventoryData.length} 筆`);
-                    }
-                } catch (err) {
-                    alert("⚠️ 讀取 Excel 時發生錯誤：" + err.message);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-            input.value = ''; 
-        } catch (e) {
-            alert("⚠️ 啟動匯入時發生錯誤：" + e.message);
-        }
+    function setFilterMode(mode) {
+        filterMode = mode;
+        document.getElementById('tabAll').classList.remove('active');
+        document.getElementById('tabUnfinished').classList.remove('active');
+        if (mode === 'all') document.getElementById('tabAll').classList.add('active');
+        else document.getElementById('tabUnfinished').classList.add('active');
+        renderList(document.querySelector('.search-input').value);
     }
 
     function renderList(filterText = '') {
         const container = document.getElementById('itemList');
         container.innerHTML = '';
-        const filtered = inventoryData.filter(item => 
+        
+        let filtered = inventoryData.filter(item => 
             item.code.toLowerCase().includes(filterText.toLowerCase()) || 
             item.name.toLowerCase().includes(filterText.toLowerCase())
         );
-        filtered.forEach((item, index) => {
+
+        // 如果是未盤點模式：只顯示 (沒盤過) 或 (盤過但數量不符)
+        if (filterMode === 'unfinished') {
+            filtered = filtered.filter(item => !(item.counted && item.actQty === item.sysQty));
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:#999; padding: 20px;">${filterMode === 'unfinished' ? '🎉 太棒了！所有項目皆已盤點正確' : '找不到相關商品'}</div>`;
+            return;
+        }
+
+        filtered.forEach((item) => {
             const realIndex = inventoryData.indexOf(item);
-            let statusClass = '';
-            if (item.counted) statusClass = (item.actQty === item.sysQty) ? 'done' : 'error';
+            let statusClass = 'todo';
+            if (item.counted) {
+                if (item.actQty === item.sysQty) statusClass = 'done';
+                else statusClass = 'error';
+            }
+
             const div = document.createElement('div');
             div.className = `item-card ${statusClass}`;
             div.onclick = () => openEditModal(realIndex);
-            div.innerHTML = `<div class="item-info"><h3>${item.name}</h3><p>代號: ${item.code}</p></div><div class="item-count"><span class="count-badge" style="color:${item.counted ? (item.actQty==item.sysQty ? 'green' : 'red') : 'black'}">${item.counted ? item.actQty : '-'}</span><div class="system-count">/ ${item.sysQty}</div></div>`;
+            
+            let countDisplay = '-';
+            let badgeColor = 'black';
+            if (item.counted) {
+                countDisplay = item.actQty;
+                badgeColor = (item.actQty === item.sysQty) ? 'green' : 'red';
+            }
+
+            div.innerHTML = `<div class="item-info"><h3>${item.name}</h3><p>代號: ${item.code}</p></div><div class="item-count"><span class="count-badge" style="color:${badgeColor}">${countDisplay}</span><div class="system-count">/ ${item.sysQty}</div></div>`;
             container.appendChild(div);
         });
+        updateStats();
     }
 
     function updateStats() {
-        document.getElementById('totalItems').innerText = inventoryData.length;
-        document.getElementById('countedItems').innerText = inventoryData.filter(i => i.counted).length;
-        document.getElementById('diffItems').innerText = inventoryData.filter(i => i.counted && i.actQty !== i.sysQty).length;
+        const total = inventoryData.length;
+        const unfinished = inventoryData.filter(item => !(item.counted && item.actQty === item.sysQty)).length;
+        document.getElementById('totalItems').innerText = total;
+        document.getElementById('unfinishedItems').innerText = unfinished;
     }
 
     function openEditModal(index) {
@@ -224,10 +251,28 @@
         const item = inventoryData[index];
         document.getElementById('modalTitle').innerText = item.name;
         document.getElementById('modalSysStock').innerText = item.sysQty;
+        document.getElementById('btnSysQty').innerText = item.sysQty; // 更新按鈕上的庫存數字
+        
         const initVal = item.counted ? item.actQty : 1; 
         document.getElementById('modalQty').value = initVal;
+        
         document.getElementById('editModal').style.display = 'flex';
         setTimeout(() => document.getElementById('modalQty').focus(), 100);
+    }
+
+    // 修改後：一鍵正確並儲存
+    function quickCorrect() {
+        if (currentEditIndex === -1) return;
+        const item = inventoryData[currentEditIndex];
+        
+        // 1. 強制設定為系統庫存
+        item.actQty = item.sysQty;
+        item.counted = true;
+
+        // 2. 存檔、關閉、刷新列表 (會自動移出未盤點分頁)
+        closeModal();
+        renderList(document.querySelector('.search-input').value);
+        updateStats();
     }
 
     function adjustQty(delta) {
@@ -256,31 +301,22 @@
     function filterList(val) { renderList(val); }
 
     async function toggleScanner() {
-        try {
-            if (typeof Html5Qrcode === 'undefined') {
-                alert('錯誤：掃描功能庫尚未載入，請檢查網路連線！');
-                return;
-            }
-
-            const btn = document.getElementById('scanBtn');
-            const readerDiv = document.getElementById('reader');
-            if (isScanning) {
-                if (html5QrCode) { await html5QrCode.stop(); html5QrCode.clear(); }
-                readerDiv.style.display = 'none';
-                btn.classList.remove('active');
-                btn.innerHTML = '📷 掃描條碼';
-                isScanning = false;
-            } else {
-                readerDiv.style.display = 'block';
-                btn.classList.add('active');
-                btn.innerHTML = '⏹ 停止掃描';
-                html5QrCode = new Html5Qrcode("reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
-                isScanning = true;
-            }
-        } catch (e) {
-            alert("⚠️ 掃描器錯誤：" + e.message);
+        const btn = document.getElementById('scanBtn');
+        const readerDiv = document.getElementById('reader');
+        if (isScanning) {
+            if (html5QrCode) { await html5QrCode.stop(); html5QrCode.clear(); }
+            readerDiv.style.display = 'none';
+            btn.classList.remove('active');
+            btn.innerHTML = '📷 掃描條碼';
+            isScanning = false;
+        } else {
+            readerDiv.style.display = 'block';
+            btn.classList.add('active');
+            btn.innerHTML = '⏹ 停止掃描';
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+            isScanning = true;
         }
     }
 
@@ -306,6 +342,3 @@
 </script>
 </body>
 </html>
-
-
-
