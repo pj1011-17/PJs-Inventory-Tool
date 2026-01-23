@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 V2.1</title>
+    <title>盤點小工具 V2.2</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     
@@ -79,7 +79,7 @@
 
         #reader { width: 100%; margin-bottom: 0; display: none; background: black; border-radius: 0 0 8px 8px; }
 
-        /* List Styling (V2.1 改版重點) */
+        /* List Styling */
         .item-list { padding: 0 15px; }
         .item-card { 
             background: var(--card); padding: 12px; margin-bottom: 8px; 
@@ -89,7 +89,7 @@
         }
         .item-card.done { border-left-color: var(--success); }
         .item-card.error { border-left-color: var(--danger); background-color: #fef2f2; }
-        .item-card.over { border-left-color: var(--blue); background-color: #eff6ff; } /* 超出的藍色 */
+        .item-card.over { border-left-color: var(--blue); background-color: #eff6ff; } 
 
         .item-info h3 { margin: 0 0 3px 0; font-size: 15px; }
         .item-info p { margin: 0; font-size: 13px; color: #6b7280; font-family: monospace; } 
@@ -98,7 +98,7 @@
         .diff-badge { font-size: 20px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
         .sub-count { font-size: 12px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; }
 
-        /* Modal V2.1 */
+        /* V2.2 Modal Styling */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: flex-end; }
         .modal { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; box-sizing: border-box; padding-bottom: 40px; }
         
@@ -106,28 +106,45 @@
         .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
         .modal-code { font-family: monospace; color: #666; font-size: 14px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
         
-        /* Modal Stats (縮小版) */
-        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .compare-box { background: #f9fafb; padding: 8px; border-radius: 6px; border: 1px solid #eee; text-align: center; }
-        .compare-label { font-size: 12px; color: #666; display: block; }
-        .compare-val { font-size: 18px; font-weight: bold; color: var(--text); }
-        .compare-val.rem { color: var(--danger); }
+        /* 數據三欄佈局 (應有/已盤/未盤) */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            gap: 8px; 
+            margin-bottom: 15px; 
+            text-align: center;
+        }
+        .stat-box { 
+            background: #f9fafb; 
+            padding: 8px 4px; 
+            border-radius: 8px; 
+            border: 1px solid #eee; 
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .stat-label { font-size: 12px; color: #666; margin-bottom: 2px; }
+        .stat-val { font-size: 18px; font-weight: bold; color: var(--text); }
+        
+        /* 狀態顏色 */
+        .val-sys { color: #666; }
+        .val-act { color: var(--primary); }
+        .val-rem.ok { color: var(--success); }
+        .val-rem.ng { color: var(--danger); }
+        .val-rem.over { color: var(--blue); }
 
         /* 快速修正按鈕 */
         .btn-quick-correct { width: 100%; padding: 10px; background: var(--warning); color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; font-size: 15px; cursor: pointer; }
 
-        /* Control Group */
-        .control-group { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px; }
+        /* Control Group (縮小版) */
+        .control-group { display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 10px; }
         .btn-circle { 
-            width: 50px; height: 50px; border-radius: 50%; border: none; 
-            font-size: 24px; font-weight: bold; cursor: pointer;
+            width: 40px; height: 40px; border-radius: 50%; border: none; 
+            font-size: 20px; font-weight: bold; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             background: #eee; color: #333;
         }
-        /* 輸入框即為已盤數量 */
         .qty-input-main { 
-            width: 100px; height: 50px; 
-            font-size: 28px; text-align: center; font-weight: bold;
+            width: 80px; height: 40px; 
+            font-size: 22px; text-align: center; font-weight: bold;
             border: 2px solid var(--primary); border-radius: 8px; background: #fff;
         }
 
@@ -135,7 +152,6 @@
         .btn-modal { padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; color: white; }
 
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
-        
         .toast {
             position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); 
             background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; 
@@ -149,7 +165,7 @@
 <div id="flashOverlay" class="flash-overlay"></div>
 
 <div class="header">
-    <h1>📦 盤點 V2.1</h1>
+    <h1>📦 盤點 V2.2</h1>
     <div class="header-tools">
         <label class="btn-tool btn-file-wrapper">
             📄 匯入
@@ -196,14 +212,18 @@
             <span class="modal-code" id="modalCode">CODE123</span>
         </div>
 
-        <div class="compare-grid">
-            <div class="compare-box">
-                <span class="compare-label">系統應有</span>
-                <span class="compare-val" id="modalSys" style="color:#666">10</span>
+        <div class="stats-grid">
+            <div class="stat-box" style="background:#f3f4f6;">
+                <span class="stat-label">應有總數</span>
+                <span class="stat-val val-sys" id="modalSys">0</span>
             </div>
-            <div class="compare-box">
-                <span class="compare-label">剩餘未盤</span>
-                <span class="compare-val rem" id="modalRem">5</span>
+            <div class="stat-box" style="background:#e0f2f1; border-color:var(--primary);">
+                <span class="stat-label">已盤</span>
+                <span class="stat-val val-act" id="modalAct">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">剩餘未盤</span>
+                <span class="stat-val val-rem" id="modalRem">0</span>
             </div>
         </div>
 
@@ -213,7 +233,7 @@
 
         <div class="control-group">
             <button class="btn-circle" onclick="adjustQty(-1)">-</button>
-            <input type="number" id="modalQty" class="qty-input-main" value="0" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" oninput="updateModalRem()">
+            <input type="number" id="modalQty" class="qty-input-main" value="0" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" oninput="syncInputToStats()">
             <button class="btn-circle" onclick="adjustQty(1)">+</button>
         </div>
         
@@ -319,21 +339,13 @@
         filtered.forEach((item) => {
             const realIndex = inventoryData.indexOf(item);
             let statusClass = 'todo';
-            
-            // 計算剩餘未盤
             const remaining = item.sysQty - item.actQty;
-            let remColor = 'var(--danger)'; // 預設紅色 (還沒盤完)
+            let remColor = 'var(--danger)';
             
             if (item.counted) {
-                if (remaining === 0) {
-                    statusClass = 'done'; remColor = 'var(--success)'; // 綠色 (盤對了)
-                } else if (remaining < 0) {
-                    statusClass = 'over'; remColor = 'var(--blue)'; // 藍色 (盤多了)
-                } else {
-                    statusClass = 'error'; // 紅色 (有盤但數量不對)
-                }
-            } else {
-                 // 沒盤過，依然是紅色
+                if (remaining === 0) { statusClass = 'done'; remColor = 'var(--success)'; }
+                else if (remaining < 0) { statusClass = 'over'; remColor = 'var(--blue)'; }
+                else { statusClass = 'error'; }
             }
 
             const div = document.createElement('div');
@@ -381,22 +393,28 @@
         const currentAct = item.counted ? item.actQty : 0;
         document.getElementById('modalQty').value = currentAct;
         
-        updateModalRem(); // 計算剩餘
+        syncInputToStats(); // 同步顯示數據
         document.getElementById('editModal').style.display = 'flex';
     }
 
-    function updateModalRem() {
+    // 當輸入框改變時，同步更新上方的「已盤」和「未盤」格子
+    function syncInputToStats() {
         if (currentEditIndex === -1) return;
         const item = inventoryData[currentEditIndex];
         const currentInput = Number(document.getElementById('modalQty').value);
+        
+        // 更新上方格子
+        document.getElementById('modalAct').innerText = currentInput;
+        
         const rem = item.sysQty - currentInput;
         const remEl = document.getElementById('modalRem');
         remEl.innerText = rem;
         
         // 變色邏輯
-        if(rem === 0) remEl.style.color = 'var(--success)';
-        else if (rem < 0) remEl.style.color = 'var(--blue)';
-        else remEl.style.color = 'var(--danger)';
+        remEl.className = 'stat-val val-rem'; // 重置
+        if(rem === 0) remEl.classList.add('ok');
+        else if (rem < 0) remEl.classList.add('over');
+        else remEl.classList.add('ng');
     }
 
     function adjustQty(delta) {
@@ -404,13 +422,12 @@
         let val = Number(input.value) + delta;
         if(val < 0) val = 0;
         input.value = val;
-        updateModalRem();
+        syncInputToStats();
     }
 
     function quickCorrect() {
         if (currentEditIndex === -1) return;
         const item = inventoryData[currentEditIndex];
-        // 一鍵正確：直接把已盤數量 = 系統數量
         document.getElementById('modalQty').value = item.sysQty;
         saveQty(); 
     }
