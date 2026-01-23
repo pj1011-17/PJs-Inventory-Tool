@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.0</title>
+    <title>盤點小工具 V2.0</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -23,8 +23,10 @@
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: var(--bg); margin: 0; padding: 0; color: var(--text); 
-            /* 固定區預留高度 */
-            padding-top: 170px; 
+            
+            /* V4.5: 加上 env(safe-area-inset-top) 避開瀏海高度 */
+            padding-top: calc(170px + env(safe-area-inset-top)); 
+            
             padding-bottom: 80px; 
             touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
         }
@@ -39,7 +41,12 @@
 
         /* 1. Header */
         .header { 
-            background: var(--primary); color: white; padding: 15px; 
+            background: var(--primary); color: white; 
+            
+            /* V4.5: 針對 Header 增加頂部內距，讓綠色背景延伸，文字下移 */
+            padding: 15px;
+            padding-top: calc(15px + env(safe-area-inset-top));
+            
             display: flex; justify-content: space-between; align-items: center; 
         }
         .header h1 { margin: 0; font-size: 18px; font-weight: 700; }
@@ -92,41 +99,35 @@
         }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
-        /* V4.3: 懸浮按鈕 - 位置上移 + 純 Flex 置中 */
-        /* 1. 這是給「相機 📷」用的設定 (您剛剛調好的狀態) */
-    .btn-fab-scan {
-        position: fixed; 
-        bottom: 60px; 
-        left: 24px; 
-        width: 56px; height: 56px;
-        border-radius: 50%; 
-        background: var(--text); 
-        color: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
-        border: none;
-    
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        font-size: 26px; 
-        z-index: 900; 
-        transition: transform 0.1s;
-    
-        /* 👇 這裡保留您剛剛調好的相機數值 */
-        padding-bottom: 10px; 
-        line-height: 1;
-    }
+        /* 懸浮按鈕 */
+        .btn-fab-scan {
+            position: fixed; 
+            bottom: 60px; 
+            left: 24px; 
+            width: 56px; height: 56px;
+            border-radius: 50%; 
+            background: var(--text); 
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+            border: none;
+            
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 26px; 
+            z-index: 900; 
+            transition: transform 0.1s;
+            
+            padding-bottom: 10px; 
+            line-height: 1;
+        }
 
-    /* 2. 這是專門給「停止 ⏹」用的設定 (紅色狀態) */
-    .btn-fab-scan.active { 
-        background: var(--danger); 
-    
-        /* 👇 因為停止按鈕飛太高，所以我們用 padding-top 把它壓下來 */
-        /* 這裡的數值您可以自己微調，通常 2px ~ 5px 很有感 */
-        padding-bottom: 0; /* 先歸零相機的設定 */
-        padding-top: 1px;  /* 往下壓 */
-    }
-       
+        .btn-fab-scan.active { 
+            background: var(--danger); 
+            padding-bottom: 0; 
+            padding-top: 1px; 
+        }
+        
         .btn-fab-scan:active { transform: scale(0.95); }
         .btn-fab-scan.active { background: var(--danger); } 
 
@@ -165,7 +166,6 @@
         
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
         
-        /* Toast 置中 */
         .toast { 
             position: fixed; bottom: 100px; 
             left: 50%; transform: translateX(-50%); 
