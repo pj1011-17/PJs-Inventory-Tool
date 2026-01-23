@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 V3.4</title>
+    <title>盤點小工具 V3.5</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -23,20 +23,33 @@
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: var(--bg); margin: 0; padding: 0; color: var(--text); 
-            /* V3.4: 增加 padding-top，避免內容被上方固定的搜尋框擋住 */
-            padding-top: 200px; 
+            
+            /* V3.5 核心：動態 Padding */
+            /* 初始高度 = Header(150) + Collapsible(130) + Buffer(10) = 290px */
+            padding-top: 290px; 
             padding-bottom: 80px; 
-            touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
+            
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent; 
+            user-select: none;
+            
+            /* 平滑過渡效果 */
+            transition: padding-top 0.3s ease;
+        }
+        
+        /* 當進入收折模式時，縮減上方留白 */
+        body.mode-collapsed {
+            padding-top: 160px; /* 只保留 Header 的高度 */
         }
         
         input { user-select: text; }
 
-        /* 固定層容器 (Header + Stats) */
+        /* --- 第一層：永遠固定的 Header & Stats --- */
         .fixed-top-group {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
             background: var(--bg);
-            /* V3.4: 確保高度足夠，不會跟搜尋框打架 */
-            height: 140px; 
+            height: 150px; /* 明確指定高度 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* 陰影移到這裡 */
         }
 
         .header { background: var(--primary); color: white; padding: 20px 15px; display: flex; justify-content: space-between; align-items: center; }
@@ -46,51 +59,55 @@
         .btn-file-wrapper { position: relative; overflow: hidden; }
         .btn-file-wrapper input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
-        .sticky-stats { background: var(--bg); padding: 10px 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .sticky-stats { background: var(--bg); padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .mini-stat { background: white; padding: 12px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e7eb; cursor: pointer; }
         .mini-stat.active { border-color: var(--primary); background: #e0f2f1; }
         .mini-stat-label { font-size: 14px; color: #666; } 
         .mini-stat-val { font-size: 20px; font-weight: bold; } 
 
-        /* V3.4: 搜尋框容器 - 位置修正 */
-        .search-container {
-            position: fixed; 
-            /* V3.4: 下移到 140px，避開上面的 Header */
-            top: 140px; 
-            left: 0; width: 100%; 
-            z-index: 90; 
+        /* --- 第二層：可收折區塊 (搜尋 + 掃描鈕) --- */
+        .collapsible-group {
+            position: fixed;
+            top: 150px; /* 接在 Fixed Header 下方 */
+            left: 0; width: 100%;
+            z-index: 90;
             background: var(--bg);
-            padding: 10px 15px;
+            padding: 0 15px 10px 15px;
             box-sizing: border-box;
-            transition: transform 0.3s ease; 
-            /* 加一點陰影區隔 */
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
-        
-        /* 收折狀態：往上移動 (藏到 header 後面) */
-        .search-container.hidden {
-            transform: translateY(-100%);
+            
+            /* 動畫設定 */
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            transform: translateY(0);
+            opacity: 1;
         }
 
+        /* 收折狀態：往上滑動並透明 */
+        .collapsible-group.hidden {
+            transform: translateY(-100%); /* 滑到 Header 後面 */
+            opacity: 0;
+            pointer-events: none; /* 避免點到 */
+        }
+
+        .search-box { margin-bottom: 10px; }
         .search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; -webkit-appearance: none; background: white; }
 
-        .scan-section { padding: 0 15px; margin-top: 10px; }
-        
-        /* V3.4: 掃描按鈕修正 - 移除可能導致歪斜的樣式，回歸標準滿版 */
+        /* 掃描按鈕現在放在可收折區塊內 */
         .btn-scan { 
-            width: 100%; 
-            padding: 15px; 
+            width: 100%; padding: 12px; 
             background: var(--text); color: white; 
             border: none; border-radius: 8px; 
-            font-weight: bold; font-size: 18px; 
+            font-weight: bold; font-size: 16px; 
             cursor: pointer; 
             display: flex; align-items: center; justify-content: center; gap: 8px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-            margin-bottom: 20px; /* 下方留白 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
         }
         .btn-scan.active { background: var(--danger); }
-        
-        #reader { width: 100%; height: 250px; margin-bottom: 15px; display: none; background: black; border-radius: 12px; overflow: hidden; position: relative; }
+
+        #reader { 
+            width: 100%; height: 250px; margin-bottom: 10px; 
+            display: none; background: black; border-radius: 12px; 
+            overflow: hidden; position: relative; 
+        }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
         /* List Styling */
@@ -127,7 +144,15 @@
         .btn-modal { padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; color: white; }
         
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; border-radius: 30px; font-size: 16px; z-index: 3000; display: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        
+        /* V3.5: Toast 置中修正 */
+        .toast { 
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); 
+            background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; 
+            border-radius: 30px; font-size: 16px; z-index: 3000; display: none; 
+            white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+            text-align: center; width: max-content; max-width: 80%;
+        }
 
         .btn-float-search {
             position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
@@ -169,10 +194,17 @@
     </div>
 </div>
 
-<div class="search-container" id="searchBar">
-    <input type="text" id="mainSearchInput" class="search-input" 
-           inputmode="numeric" pattern="[0-9]*" enterkeyhint="search" autocomplete="off"
-           placeholder="🔍 輸入代號後幾碼..." oninput="filterList(this.value)">
+<div class="collapsible-group" id="collapsibleGroup">
+    <div class="search-box">
+        <input type="text" id="mainSearchInput" class="search-input" 
+               inputmode="numeric" pattern="[0-9]*" enterkeyhint="search" autocomplete="off"
+               placeholder="🔍 輸入代號後幾碼..." oninput="filterList(this.value)">
+    </div>
+    
+    <div id="reader"></div>
+    <button type="button" class="btn-scan" id="scanBtn" onclick="toggleScanner()">
+        📷 連續掃描模式
+    </button>
 </div>
 
 <div class="item-list" id="itemList">
@@ -181,14 +213,7 @@
     </div>
 </div>
 
-<div class="scan-section">
-    <div id="reader"></div>
-    <button type="button" class="btn-scan" id="scanBtn" onclick="toggleScanner()">
-        📷 連續掃描模式
-    </button>
-</div>
-
-<button type="button" class="btn-float-search" id="fabSearch" onclick="summonSearchBar()">
+<button type="button" class="btn-float-search" id="fabSearch" onclick="expandHeader()">
     🔍
 </button>
 
@@ -240,32 +265,39 @@
     let currentEditIndex = -1;
     let filterMode = 'all';
     
-    // 搜尋框收折邏輯
+    // V3.5: 收折與動態 Padding 邏輯
     let lastScrollY = 0;
-    const searchBar = document.getElementById('searchBar');
+    const collapsibleGroup = document.getElementById('collapsibleGroup');
     const fabSearch = document.getElementById('fabSearch');
+    const body = document.body;
 
     window.addEventListener('scroll', () => {
         const currentScroll = window.scrollY;
         
-        // 往下滑超過 50px -> 隱藏搜尋框
+        // 往下滑超過 50px -> 收折 + 減少 Padding
         if (currentScroll > lastScrollY && currentScroll > 50) {
-            searchBar.classList.add('hidden');
+            collapsibleGroup.classList.add('hidden');
+            body.classList.add('mode-collapsed'); // 關鍵：控制 Body Padding
             fabSearch.classList.add('show'); 
         } else {
-            // 往上滑 -> 顯示搜尋框
-            searchBar.classList.remove('hidden');
-            fabSearch.classList.remove('show'); 
+            // 往上滑 -> 展開 + 恢復 Padding
+            expandHeader();
         }
         lastScrollY = currentScroll;
     });
 
-    function summonSearchBar() {
-        searchBar.classList.remove('hidden'); 
-        fabSearch.classList.remove('show'); 
-        setTimeout(() => {
-            document.getElementById('mainSearchInput').focus();
-        }, 300);
+    // 強制展開
+    function expandHeader() {
+        collapsibleGroup.classList.remove('hidden');
+        body.classList.remove('mode-collapsed');
+        fabSearch.classList.remove('show');
+    }
+
+    // 點擊放大鏡：展開並聚焦
+    fabSearch.onclick = function() {
+        expandHeader();
+        window.scrollTo(0, 0);
+        setTimeout(() => document.getElementById('mainSearchInput').focus(), 300);
     }
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -326,7 +358,8 @@
                     };
                 }).filter(item => item.code !== '');
                 setFilterMode('all');
-                alert(`✅ 已載入 ${inventoryData.length} 筆資料`);
+                // V3.5: 改用 Toast 顯示成功訊息，並修正位置
+                showToast(`✅ 已載入 ${inventoryData.length} 筆資料`);
             } catch(err) { alert("❌ 讀取失敗"); }
         };
         reader.readAsArrayBuffer(file); input.value = ''; 
