@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 V2.7</title>
+    <title>盤點小工具 V3.0</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
-    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0ABAB5">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="盤點小工具">
@@ -16,6 +16,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
     <style>
         :root { --primary: #0ABAB5; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --blue: #3b82f6; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
         
@@ -26,20 +27,23 @@
             color: var(--text); 
             padding-bottom: 80px;
             padding-top: env(safe-area-inset-top); 
-            touch-action: manipulation;
+            touch-action: manipulation; /* 禁止雙擊縮放 */
+            -webkit-tap-highlight-color: transparent; /* 移除 Android 點擊藍框 */
+            user-select: none; /* 禁止長按選取文字 */
         }
+        
+        /* 允許輸入框文字被選取 */
+        input { user-select: text; }
 
         /* Header */
         .header { 
-            background: var(--primary); 
-            color: white; 
-            padding: 20px 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
+            background: var(--primary); color: white; padding: 20px 15px; 
+            display: flex; justify-content: space-between; align-items: center; 
         }
         .header h1 { margin: 0; font-size: 18px; font-weight: 700; }
         .header-tools { display: flex; gap: 10px; }
+        
+        /* Buttons & Tools */
         .btn-tool { 
             background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); 
             color: white; padding: 5px 10px; border-radius: 6px; font-size: 12px; 
@@ -56,8 +60,7 @@
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
         }
         .mini-stat {
-            background: white; padding: 12px 10px; 
-            border-radius: 6px;
+            background: white; padding: 12px 10px; border-radius: 6px;
             display: flex; justify-content: space-between; align-items: center;
             border: 1px solid #e5e7eb; cursor: pointer;
         }
@@ -65,7 +68,7 @@
         .mini-stat-label { font-size: 14px; color: #666; } 
         .mini-stat-val { font-size: 20px; font-weight: bold; } 
 
-        /* Scan & Search */
+        /* Scan Section */
         .scan-section { padding: 0 15px; margin-top: 10px; }
         .btn-scan { 
             width: 100%; padding: 15px; background: var(--text); color: white; 
@@ -76,24 +79,20 @@
         .btn-scan.active { background: var(--danger); }
         
         #reader { 
-            width: 100%; 
-            height: 250px; 
-            margin-bottom: 15px; 
-            display: none; 
-            background: black; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            position: relative;
+            width: 100%; height: 250px; margin-bottom: 15px; 
+            display: none; background: black; border-radius: 12px; 
+            overflow: hidden; position: relative;
         }
         #reader video {
-            object-fit: cover;
-            width: 100% !important;
-            height: 100% !important;
-            border-radius: 12px; 
+            object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; 
         }
 
+        /* Search Box */
         .search-box { padding: 10px 15px; }
-        .search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .search-input { 
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; 
+            -webkit-appearance: none; /* iOS 扁平化 */
+        }
 
         /* List Styling */
         .item-list { padding: 0 15px; }
@@ -115,7 +114,7 @@
         .diff-badge { font-size: 20px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
         .sub-count { font-size: 12px; color: #777; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
 
-        /* Modal Styling */
+        /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: flex-end; }
         .modal { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; box-sizing: border-box; padding-bottom: 40px; }
         
@@ -142,52 +141,36 @@
         .btn-modal { padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; color: white; }
 
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; border-radius: 30px; font-size: 16px; z-index: 3000; display: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        
+        .toast { 
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); 
+            background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; 
+            border-radius: 30px; font-size: 16px; z-index: 3000; display: none; 
+            white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+        }
 
-        /* V2.7: 浮動搜尋按鈕 (FAB) */
+        /* Floating Search Button */
         .btn-float-search {
-            position: fixed;
-            bottom: 30px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            z-index: 900;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.3s ease;
-            transform: translateY(20px);
+            position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
+            border-radius: 50%; background: var(--primary); color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: none;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; z-index: 900; opacity: 0; pointer-events: none;
+            transition: all 0.3s ease; transform: translateY(20px);
         }
         .btn-float-search.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
         .btn-float-search:active { transform: scale(0.95); }
 
-        /* V2.7: 搜尋覆蓋層 */
+        /* Search Overlay */
         .search-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 1100; /* 比 Modal 高 */
-            display: none;
-            flex-direction: column;
-            padding: 20px;
-            box-sizing: border-box;
+            background: rgba(0,0,0,0.7); z-index: 1100;
+            display: none; flex-direction: column; padding: 20px; box-sizing: border-box;
             backdrop-filter: blur(5px);
         }
         .search-wrapper-float {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            width: 100%;
-            box-sizing: border-box;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            animation: slideDown 0.3s ease;
+            background: white; padding: 15px; border-radius: 12px; width: 100%; box-sizing: border-box;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2); animation: slideDown 0.3s ease;
         }
         @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
@@ -197,13 +180,13 @@
 <div id="flashOverlay" class="flash-overlay"></div>
 
 <div class="header">
-    <h1>📦 盤點 V2.7</h1>
+    <h1>📦 盤點小工具</h1>
     <div class="header-tools">
         <label class="btn-tool btn-file-wrapper">
             📄 匯入
             <input type="file" id="fileInput" accept=".xlsx, .xls" onchange="handleFile(this)">
         </label>
-        <button class="btn-tool" onclick="resetAll()">🔄 重置</button>
+        <button type="button" class="btn-tool" onclick="resetAll()">🔄 重置</button>
     </div>
 </div>
 
@@ -220,13 +203,15 @@
 
 <div class="scan-section">
     <div id="reader"></div>
-    <button class="btn-scan" id="scanBtn" onclick="toggleScanner()">
+    <button type="button" class="btn-scan" id="scanBtn" onclick="toggleScanner()">
         📷 連續掃描模式
     </button>
 </div>
 
 <div class="search-box">
-    <input type="text" id="mainSearchInput" class="search-input" inputmode="numeric" pattern="[0-9]*" placeholder="🔍 輸入代號後幾碼..." oninput="syncSearch(this.value)">
+    <input type="text" id="mainSearchInput" class="search-input" 
+           inputmode="numeric" pattern="[0-9]*" enterkeyhint="search" autocomplete="off"
+           placeholder="🔍 輸入代號後幾碼..." oninput="syncSearch(this.value)">
 </div>
 
 <div class="item-list" id="itemList">
@@ -235,7 +220,7 @@
     </div>
 </div>
 
-<button class="btn-float-search" id="fabSearch" onclick="openSearchOverlay()">
+<button type="button" class="btn-float-search" id="fabSearch" onclick="openSearchOverlay()">
     🔍
 </button>
 
@@ -243,9 +228,11 @@
     <div class="search-wrapper-float" onclick="event.stopPropagation()">
         <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
             <h3 style="margin:0; font-size:16px;">快速搜尋</h3>
-            <button onclick="closeSearchOverlay()" style="border:none; background:none; font-size:24px; color:#666;">&times;</button>
+            <button type="button" onclick="closeSearchOverlay()" style="border:none; background:none; font-size:24px; color:#666;">&times;</button>
         </div>
-        <input type="text" id="floatSearchInput" class="search-input" inputmode="numeric" pattern="[0-9]*" placeholder="🔍 輸入代號..." oninput="syncSearch(this.value)">
+        <input type="text" id="floatSearchInput" class="search-input" 
+               inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off"
+               placeholder="🔍 輸入代號..." oninput="syncSearch(this.value)">
     </div>
 </div>
 
@@ -273,19 +260,21 @@
             </div>
         </div>
 
-        <button class="btn-quick-correct" onclick="quickCorrect()">
+        <button type="button" class="btn-quick-correct" onclick="quickCorrect()">
             ⚡ 一鍵正確 (<span id="btnQuickQty"></span>個)
         </button>
 
         <div class="control-group">
-            <button class="btn-circle" onclick="adjustQty(-1)">-</button>
-            <input type="number" id="modalQty" class="qty-input-main" value="0" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" oninput="syncInputToStats()">
-            <button class="btn-circle" onclick="adjustQty(1)">+</button>
+            <button type="button" class="btn-circle" onclick="adjustQty(-1)">-</button>
+            <input type="number" id="modalQty" class="qty-input-main" value="0" 
+                   inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off"
+                   onclick="this.select()" oninput="syncInputToStats()">
+            <button type="button" class="btn-circle" onclick="adjustQty(1)">+</button>
         </div>
         
         <div class="modal-btns">
-            <button class="btn-modal" style="background: #9ca3af;" onclick="closeModal()">取消</button>
-            <button class="btn-modal" style="background: var(--primary);" onclick="saveQty()">儲存</button>
+            <button type="button" class="btn-modal" style="background: #9ca3af;" onclick="closeModal()">取消</button>
+            <button type="button" class="btn-modal" style="background: var(--primary);" onclick="saveQty()">儲存</button>
         </div>
     </div>
 </div>
@@ -299,20 +288,18 @@
     let currentEditIndex = -1;
     let filterMode = 'all';
 
+    // 音效初始化
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
 
-    // V2.7: 滾動監聽
+    // 監聽滾動：顯示/隱藏懸浮按鈕
     window.addEventListener('scroll', () => {
         const fab = document.getElementById('fabSearch');
-        if (window.scrollY > 150) {
-            fab.classList.add('show');
-        } else {
-            fab.classList.remove('show');
-        }
+        if (window.scrollY > 150) { fab.classList.add('show'); } 
+        else { fab.classList.remove('show'); }
     });
 
-    // V2.7: 同步兩個搜尋框
+    // 搜尋同步與過濾
     function syncSearch(val) {
         document.getElementById('mainSearchInput').value = val;
         document.getElementById('floatSearchInput').value = val;
@@ -323,7 +310,7 @@
         const overlay = document.getElementById('searchOverlay');
         const floatInput = document.getElementById('floatSearchInput');
         overlay.style.display = 'flex';
-        // 延遲聚焦，確保鍵盤彈出
+        // 延遲聚焦確保鍵盤彈出
         setTimeout(() => floatInput.focus(), 100);
     }
 
@@ -332,11 +319,13 @@
         document.getElementById('searchOverlay').style.display = 'none';
     }
 
+    // 資料讀取工具
     function getValue(row, possibleNames) {
         for (let name of possibleNames) { if (row[name] !== undefined) return row[name]; }
         return null;
     }
 
+    // 音效播放
     function playBeep(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const oscillator = audioCtx.createOscillator();
@@ -354,12 +343,14 @@
         }
     }
 
+    // 視覺閃爍
     function triggerFlash(color) {
         const overlay = document.getElementById('flashOverlay');
         overlay.style.backgroundColor = color === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)';
         overlay.style.opacity = 1; setTimeout(() => { overlay.style.opacity = 0; }, 300);
     }
 
+    // 檔案處理
     function handleFile(input) {
         const file = input.files[0];
         if (!file) return;
@@ -375,7 +366,7 @@
                 const firstRow = json[0];
                 const hasCode = getValue(firstRow, SYSTEM_COLUMNS.code) !== null;
                 const hasName = getValue(firstRow, SYSTEM_COLUMNS.name) !== null;
-                if (!hasCode && !hasName) { alert("❌ 格式錯誤"); input.value = ''; return; }
+                if (!hasCode && !hasName) { alert("❌ 盤點表格式錯誤"); input.value = ''; return; }
                 
                 inventoryData = json.map(row => {
                     const rawCode = getValue(row, SYSTEM_COLUMNS.code);
@@ -395,6 +386,7 @@
         reader.readAsArrayBuffer(file); input.value = ''; 
     }
 
+    // 列表渲染
     function renderList(filterText = '') {
         const container = document.getElementById('itemList');
         container.innerHTML = '';
@@ -462,6 +454,7 @@
         renderList(document.getElementById('mainSearchInput').value);
     }
 
+    // Modal 控制
     function openEditModal(index) {
         if(isScanning && html5QrCode) html5QrCode.pause();
         currentEditIndex = index;
@@ -490,8 +483,7 @@
         const remEl = document.getElementById('modalRem');
         remEl.innerText = rem;
         
-        // 變色邏輯
-        remEl.className = 'stat-val val-rem'; // 重置
+        remEl.className = 'stat-val val-rem'; 
         if(rem === 0) remEl.classList.add('ok');
         else if (rem < 0) remEl.classList.add('over');
         else remEl.classList.add('ng');
@@ -517,10 +509,14 @@
         const qty = Number(document.getElementById('modalQty').value);
         inventoryData[currentEditIndex].actQty = qty;
         inventoryData[currentEditIndex].counted = true;
-        closeModal();
-        closeSearchOverlay(); // 儲存時也關閉浮動搜尋
         
-        // 清空所有搜尋框
+        // Android 優化：強制收起鍵盤
+        if (document.activeElement) { document.activeElement.blur(); }
+        
+        closeModal();
+        closeSearchOverlay(); 
+        
+        // 儲存後清空搜尋
         document.getElementById('mainSearchInput').value = '';
         document.getElementById('floatSearchInput').value = '';
         renderList(''); 
@@ -532,11 +528,13 @@
         if(isScanning && html5QrCode) html5QrCode.resume();
     }
 
+    // 掃描功能
     async function toggleScanner() {
         const btn = document.getElementById('scanBtn');
         const readerDiv = document.getElementById('reader');
         if (isScanning) {
-            if (html5QrCode) { await html5QrCode.stop(); html5QrCode.clear(); }
+            // 安全停止，防止 Android 相機崩潰
+            try { if (html5QrCode) { await html5QrCode.stop(); html5QrCode.clear(); } } catch(e) {}
             readerDiv.style.display = 'none';
             btn.classList.remove('active');
             btn.innerHTML = '📷 連續掃描模式';
@@ -567,7 +565,6 @@
             triggerFlash('success');
             showToast(`✅ ${item.name} (+1)`);
             updateStats();
-            // 掃描時也要更新兩個搜尋框的列表狀態（雖然通常掃描時搜尋框是空的）
             renderList(document.getElementById('mainSearchInput').value);
         } else {
             playBeep('error');
