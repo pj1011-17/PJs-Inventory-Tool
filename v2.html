@@ -93,30 +93,40 @@
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
         /* V4.3: 懸浮按鈕 - 位置上移 + 純 Flex 置中 */
-        .btn-fab-scan {
-            position: fixed; 
-            bottom: 80px; /* V4.3: 大幅上移，避開底部區域 */
-            left: 20px; 
-            width: 56px; height: 56px;
-            border-radius: 50%; 
-            background: var(--text); 
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
-            border: none;
-            
-            /* 標準置中 */
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            
-            font-size: 26px; 
-            z-index: 900; 
-            transition: transform 0.1s;
-            
-            /* V4.3: 手動設定高度 */
-            padding-bottom: 10px;
-            line-height: 1;
-        }
+        /* 1. 這是給「相機 📷」用的設定 (您剛剛調好的狀態) */
+.btn-fab-scan {
+    position: fixed; 
+    bottom: 80px; 
+    left: 20px; 
+    width: 56px; height: 56px;
+    border-radius: 50%; 
+    background: var(--text); 
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+    border: none;
+    
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 26px; 
+    z-index: 900; 
+    transition: transform 0.1s;
+    
+    /* 👇 這裡保留您剛剛調好的相機數值 */
+    padding-bottom: 10px; 
+    line-height: 1;
+}
+
+/* 2. 這是專門給「停止 ⏹」用的設定 (紅色狀態) */
+.btn-fab-scan.active { 
+    background: var(--danger); 
+    
+    /* 👇 因為停止按鈕飛太高，所以我們用 padding-top 把它壓下來 */
+    /* 這裡的數值您可以自己微調，通常 2px ~ 5px 很有感 */
+    padding-bottom: 0; /* 先歸零相機的設定 */
+    padding-top: 4px;  /* 往下壓 */
+}
+       
         .btn-fab-scan:active { transform: scale(0.95); }
         .btn-fab-scan.active { background: var(--danger); } 
 
