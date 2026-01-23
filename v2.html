@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 V4.2</title>
+    <title>盤點小工具 V4.3</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -24,34 +24,24 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: var(--bg); margin: 0; padding: 0; color: var(--text); 
             /* 固定區預留高度 */
-            padding-top: 172px; 
+            padding-top: 175px; 
             padding-bottom: 80px; 
             touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
         }
         
         input { user-select: text; }
 
-        /* V4.2: 固定組合包 (Header + Stats + Search) */
+        /* 頂部固定組合包 */
         .fixed-group {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
             background: var(--bg);
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            
-            /* V4.2: 增加滑動過渡動畫 */
-            transition: transform 0.3s ease;
-        }
-
-        /* V4.2: 當加入這個 class 時，整個固定區往上縮，隱藏 Header */
-        .fixed-group.hide-header {
-            transform: translateY(-68px); /* 68px 約為 Header 高度 */
         }
 
         /* 1. Header */
         .header { 
             background: var(--primary); color: white; padding: 15px; 
-            display: flex; justify-content: space-between; align-items: center;
-            height: 38px; /* 固定高度以便計算 */
-            box-sizing: content-box;
+            display: flex; justify-content: space-between; align-items: center; 
         }
         .header h1 { margin: 0; font-size: 18px; font-weight: 700; }
         .header-tools { display: flex; gap: 10px; }
@@ -103,10 +93,10 @@
         }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
-        /* V4.2: 懸浮按鈕 - 像素級置中修正 */
+        /* V4.3: 懸浮按鈕 - 位置上移 + 純 Flex 置中 */
         .btn-fab-scan {
             position: fixed; 
-            bottom: 30px; 
+            bottom: 80px; /* V4.3: 大幅上移，避開底部區域 */
             left: 20px; 
             width: 56px; height: 56px;
             border-radius: 50%; 
@@ -115,7 +105,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
             border: none;
             
-            /* Flex 置中大法 */
+            /* 標準置中 */
             display: flex; 
             align-items: center; 
             justify-content: center;
@@ -124,9 +114,8 @@
             z-index: 900; 
             transition: transform 0.1s;
             
-            /* 針對 Emoji 的視覺微調 */
+            /* V4.3: 移除之前的偏移修正，回歸預設 */
             padding: 0;
-            padding-bottom: 4px; /* 把 Emoji 稍微往下壓，視覺更置中 */
             line-height: 1;
         }
         .btn-fab-scan:active { transform: scale(0.95); }
@@ -186,7 +175,7 @@
 
 <div id="flashOverlay" class="flash-overlay"></div>
 
-<div class="fixed-group" id="fixedGroup">
+<div class="fixed-group">
     <div class="header">
         <h1>📦 盤點小工具</h1>
         <div class="header-tools">
@@ -277,23 +266,6 @@
     let lastScanTime = 0;
     let currentEditIndex = -1;
     let filterMode = 'all';
-
-    // V4.2: 滾動自動隱藏 Header 邏輯
-    let lastScrollY = 0;
-    const fixedGroup = document.getElementById('fixedGroup');
-
-    window.addEventListener('scroll', () => {
-        const currentScroll = window.scrollY;
-        
-        // 往下捲動超過 50px -> 隱藏 Header
-        if (currentScroll > lastScrollY && currentScroll > 50) {
-            fixedGroup.classList.add('hide-header');
-        } else {
-            // 往上捲動 -> 顯示 Header
-            fixedGroup.classList.remove('hide-header');
-        }
-        lastScrollY = currentScroll;
-    });
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
