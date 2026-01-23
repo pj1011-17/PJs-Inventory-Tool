@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 V2.2</title>
+    <title>盤點小工具 V2.3</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     
@@ -98,7 +98,7 @@
         .diff-badge { font-size: 20px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
         .sub-count { font-size: 12px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; }
 
-        /* V2.2 Modal Styling */
+        /* V2.3 Modal Styling (修正版) */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: flex-end; }
         .modal { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; box-sizing: border-box; padding-bottom: 40px; }
         
@@ -106,27 +106,26 @@
         .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
         .modal-code { font-family: monospace; color: #666; font-size: 14px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
         
-        /* 數據三欄佈局 (應有/已盤/未盤) */
+        /* 數據三欄佈局 (文字左，數字右，無背景色) */
         .stats-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr 1fr; 
             gap: 8px; 
             margin-bottom: 15px; 
-            text-align: center;
         }
         .stat-box { 
-            background: #f9fafb; 
-            padding: 8px 4px; 
-            border-radius: 8px; 
-            border: 1px solid #eee; 
-            display: flex; flex-direction: column; justify-content: center;
+            background: white; /* 純白背景 */
+            padding: 8px 6px; /* 稍微縮小內距以防換行 */
+            border-radius: 6px; 
+            border: 1px solid #e5e7eb; /* 細邊框 */
+            display: flex; 
+            justify-content: space-between; /* 左右撐開 */
+            align-items: center;
         }
-        .stat-label { font-size: 12px; color: #666; margin-bottom: 2px; }
-        .stat-val { font-size: 18px; font-weight: bold; color: var(--text); }
+        .stat-label { font-size: 12px; color: #666; font-weight: 500; }
+        .stat-val { font-size: 16px; font-weight: bold; color: #333; } /* 預設黑色 */
         
-        /* 狀態顏色 */
-        .val-sys { color: #666; }
-        .val-act { color: var(--primary); }
+        /* 狀態顏色 (只用在未盤) */
         .val-rem.ok { color: var(--success); }
         .val-rem.ng { color: var(--danger); }
         .val-rem.over { color: var(--blue); }
@@ -165,7 +164,7 @@
 <div id="flashOverlay" class="flash-overlay"></div>
 
 <div class="header">
-    <h1>📦 盤點 V2.2</h1>
+    <h1>📦 盤點 V2.3</h1>
     <div class="header-tools">
         <label class="btn-tool btn-file-wrapper">
             📄 匯入
@@ -213,16 +212,16 @@
         </div>
 
         <div class="stats-grid">
-            <div class="stat-box" style="background:#f3f4f6;">
-                <span class="stat-label">應有總數</span>
-                <span class="stat-val val-sys" id="modalSys">0</span>
-            </div>
-            <div class="stat-box" style="background:#e0f2f1; border-color:var(--primary);">
-                <span class="stat-label">已盤</span>
-                <span class="stat-val val-act" id="modalAct">0</span>
+            <div class="stat-box">
+                <span class="stat-label">應有</span>
+                <span class="stat-val" id="modalSys">0</span>
             </div>
             <div class="stat-box">
-                <span class="stat-label">剩餘未盤</span>
+                <span class="stat-label">已盤</span>
+                <span class="stat-val" id="modalAct">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">未盤</span>
                 <span class="stat-val val-rem" id="modalRem">0</span>
             </div>
         </div>
@@ -397,13 +396,11 @@
         document.getElementById('editModal').style.display = 'flex';
     }
 
-    // 當輸入框改變時，同步更新上方的「已盤」和「未盤」格子
     function syncInputToStats() {
         if (currentEditIndex === -1) return;
         const item = inventoryData[currentEditIndex];
         const currentInput = Number(document.getElementById('modalQty').value);
         
-        // 更新上方格子
         document.getElementById('modalAct').innerText = currentInput;
         
         const rem = item.sysQty - currentInput;
@@ -498,7 +495,7 @@
     }
     
     function filterList(val) { renderList(val); }
-    function resetAll() { if(confirm('清空所有資料？')) { inventoryData = []; renderList(); updateStats(); } }
+    function resetAll() { if(confirm('確定清空所有資料？')) { inventoryData = []; renderList(); updateStats(); } }
 </script>
 </body>
 </html>
