@@ -312,7 +312,7 @@
                     };
                 }).filter(item => item.code !== '');
                 setFilterMode('all');
-                alert(`✅ 載入 ${inventoryData.length} 筆資料`);
+                alert(`✅ 已載入 ${inventoryData.length} 筆資料`);
             } catch(err) { alert("❌ 讀取失敗"); }
         };
         reader.readAsArrayBuffer(file); input.value = ''; 
