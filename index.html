@@ -10,7 +10,7 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="盤點">
+    <meta name="apple-mobile-web-app-title" content="盤點小工具">
     
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100%25' height='100%25' fill='%230ABAB5'/%3E%3Ctext x='50%25' y='50%25' font-size='70' text-anchor='middle' dominant-baseline='central'%3E📦%3C/text%3E%3C/svg%3E">
 
@@ -74,38 +74,22 @@
         .btn-adjust { flex: 0 0 60px; height: 50px; font-size: 20px; background: #eee; border: none; border-radius: 8px; cursor: pointer; }
         .qty-input { flex: 1; min-width: 0; height: 50px; font-size: 24px; text-align: center; border: 2px solid var(--primary); border-radius: 8px; box-sizing: border-box; }
         
-        /* 一鍵正確按鈕 */
         .btn-quick-correct { width: 100%; padding: 12px; background: var(--warning); color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        
         .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-        /* 自動消失的提示框 (Toast) */
         .toast {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-size: 14px;
-            z-index: 2000;
-            display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            white-space: nowrap;
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; z-index: 2000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); white-space: nowrap;
         }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>📦 盤點小工具</h1>
+    <h1>📦盤點小工具</h1>
     <button class="btn-sm" onclick="resetAll()">重置</button>
 </div>
 
 <div id="reader"></div>
-
 <div id="toast" class="toast"></div>
 
 <div class="dashboard">
@@ -130,7 +114,7 @@
 </div>
 
 <div class="search-box">
-    <input type="text" class="search-input" inputmode="numeric" placeholder="🔍 輸入代號搜尋..." oninput="filterList(this.value)">
+    <input type="text" class="search-input" placeholder="🔍 輸入代號或品名" oninput="filterList(this.value)">
 </div>
 
 <div class="item-list" id="itemList">
@@ -143,17 +127,14 @@
     <div class="modal">
         <div class="modal-title" id="modalTitle">商品名稱</div>
         <div class="modal-subtitle">系統應有: <span id="modalSysStock">0</span></div>
-        
         <button class="btn-quick-correct" onclick="quickCorrect()">
             ⚡ 一鍵正確 (直接儲存 <span id="btnSysQty">0</span>)
         </button>
-
         <div class="modal-input-group">
             <button class="btn-adjust" onclick="adjustQty(-1)">-1</button>
             <input type="number" id="modalQty" class="qty-input" value="0" inputmode="numeric" pattern="[0-9]*" onclick="this.select()">
             <button class="btn-adjust" onclick="adjustQty(1)">+1</button>
         </div>
-        
         <div class="modal-btns">
             <button class="btn" style="background: #9ca3af; color: white;" onclick="closeModal()">取消</button>
             <button class="btn" style="background: var(--primary); color: white;" onclick="saveQty()">確認</button>
@@ -165,7 +146,7 @@
     let inventoryData = [];
     let html5QrCode;
     let isScanning = false;
-    let isProcessing = false; // 防止重複掃描鎖
+    let isProcessing = false; 
     let currentEditIndex = -1;
     let filterMode = 'all';
 
@@ -280,6 +261,11 @@
     }
 
     function openEditModal(index) {
+        // 重要修復：打開編輯視窗時，必須暫停掃描器
+        if(isScanning && html5QrCode) {
+             html5QrCode.pause();
+        }
+
         currentEditIndex = index;
         const item = inventoryData[index];
         document.getElementById('modalTitle').innerText = item.name;
@@ -290,7 +276,9 @@
         document.getElementById('modalQty').value = initVal;
         
         document.getElementById('editModal').style.display = 'flex';
-        setTimeout(() => document.getElementById('modalQty').focus(), 100);
+        
+        // 重要修復：不自動聚焦，避免 Android 鍵盤干擾
+        // setTimeout(() => document.getElementById('modalQty').focus(), 100); 
     }
 
     function quickCorrect() {
@@ -313,7 +301,7 @@
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
         currentEditIndex = -1;
-        // 關閉視窗後，如果原本是在掃描狀態，就恢復掃描
+        // 重要修復：關閉視窗後，恢復掃描
         if(isScanning && html5QrCode) {
              html5QrCode.resume();
              isProcessing = false;
@@ -332,14 +320,13 @@
 
     function filterList(val) { renderList(val); }
 
-    // 顯示自動消失的提示 (取代 alert)
     function showToast(message) {
         const toast = document.getElementById('toast');
         toast.innerText = message;
         toast.style.display = 'block';
         setTimeout(() => {
             toast.style.display = 'none';
-        }, 2000); // 2秒後消失
+        }, 2000); 
     }
 
     async function toggleScanner() {
@@ -365,28 +352,25 @@
     }
 
     function onScanSuccess(decodedText, decodedResult) {
-        // 如果正在處理中(例如剛剛報錯還沒冷卻完)，就直接忽略這次掃描
         if (isProcessing) return;
 
-        isProcessing = true; // 鎖定
-        html5QrCode.pause(); // 暫停鏡頭畫面
-
+        isProcessing = true; 
+        
         const index = inventoryData.findIndex(item => item.code === decodedText);
         
         if (index !== -1) { 
-            // 找到了：打開編輯視窗
+             html5QrCode.pause(); 
             openEditModal(index); 
-            // 注意：isProcessing 會在 closeModal() 時被解除
         } else { 
-            // 沒找到：顯示 Toast 提示，並設定 2 秒冷卻
+            html5QrCode.pause(); 
             showToast(`⚠️ 找不到代號：${decodedText}`);
             
             setTimeout(() => {
                 if (isScanning && html5QrCode) {
-                    html5QrCode.resume(); // 恢復掃描
-                    isProcessing = false; // 解除鎖定
+                    html5QrCode.resume(); 
+                    isProcessing = false; 
                 }
-            }, 2000); // 2秒後自動恢復
+            }, 2000); 
         }
     }
 
@@ -396,4 +380,3 @@
 </script>
 </body>
 </html>
-
