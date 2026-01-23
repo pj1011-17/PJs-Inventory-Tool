@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 V2.5</title>
+    <title>盤點小工具 V2.7</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     
@@ -75,22 +75,21 @@
         }
         .btn-scan.active { background: var(--danger); }
         
-        /* V2.5 修正：限制掃描框高度，避免暈眩 */
         #reader { 
             width: 100%; 
-            height: 250px; /* 固定高度 */
-            margin-bottom: 0; 
+            height: 250px; 
+            margin-bottom: 15px; 
             display: none; 
             background: black; 
-            border-radius: 0 0 8px 8px; 
-            overflow: hidden; /* 隱藏超出的影像 */
+            border-radius: 12px; 
+            overflow: hidden; 
             position: relative;
         }
-        /* 強制 video 填滿但不變形 */
         #reader video {
             object-fit: cover;
             width: 100% !important;
             height: 100% !important;
+            border-radius: 12px; 
         }
 
         .search-box { padding: 10px 15px; }
@@ -108,12 +107,13 @@
         .item-card.error { border-left-color: var(--danger); background-color: #fef2f2; }
         .item-card.over { border-left-color: var(--blue); background-color: #eff6ff; } 
 
-        .item-info h3 { margin: 0 0 3px 0; font-size: 15px; }
+        .item-info { flex: 1; padding-right: 10px; min-width: 0; }
+        .item-info h3 { margin: 0 0 3px 0; font-size: 15px; line-height: 1.4; }
         .item-info p { margin: 0; font-size: 13px; color: #6b7280; font-family: monospace; } 
         
-        .item-count { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
+        .item-count { text-align: right; display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
         .diff-badge { font-size: 20px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-        .sub-count { font-size: 14px; color: #777; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+        .sub-count { font-size: 12px; color: #777; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
 
         /* Modal Styling */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: flex-end; }
@@ -123,21 +123,8 @@
         .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
         .modal-code { font-family: monospace; color: #666; font-size: 14px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
         
-        .stats-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr 1fr; 
-            gap: 8px; 
-            margin-bottom: 15px; 
-        }
-        .stat-box { 
-            background: white; 
-            padding: 8px 6px; 
-            border-radius: 6px; 
-            border: 1px solid #e5e7eb; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-        }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .stat-box { background: white; padding: 8px 6px; border-radius: 6px; border: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
         .stat-label { font-size: 12px; color: #666; font-weight: 500; }
         .stat-val { font-size: 16px; font-weight: bold; color: #333; } 
         
@@ -148,33 +135,61 @@
         .btn-quick-correct { width: 100%; padding: 10px; background: var(--warning); color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; font-size: 15px; cursor: pointer; }
 
         .control-group { display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 10px; }
-        
-        .btn-circle { 
-            width: 40px; height: 40px; border-radius: 50%; border: none; 
-            font-size: 22px; 
-            font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            background: #eee; color: #333;
-            padding: 0; 
-            padding-bottom: 3px; 
-            line-height: 1; 
-        }
-        .qty-input-main { 
-            width: 80px; height: 40px; 
-            font-size: 22px; text-align: center; font-weight: bold;
-            border: 2px solid var(--primary); border-radius: 8px; background: #fff;
-        }
+        .btn-circle { width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 22px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #eee; color: #333; padding: 0; padding-bottom: 3px; line-height: 1; }
+        .qty-input-main { width: 80px; height: 40px; font-size: 22px; text-align: center; font-weight: bold; border: 2px solid var(--primary); border-radius: 8px; background: #fff; }
 
         .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .btn-modal { padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; color: white; }
 
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
-        .toast {
-            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); 
-            background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; 
-            border-radius: 30px; font-size: 14px; z-index: 3000; display: none; 
-            white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; border-radius: 30px; font-size: 16px; z-index: 3000; display: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+        /* V2.7: 浮動搜尋按鈕 (FAB) */
+        .btn-float-search {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 900;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            transform: translateY(20px);
         }
+        .btn-float-search.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .btn-float-search:active { transform: scale(0.95); }
+
+        /* V2.7: 搜尋覆蓋層 */
+        .search-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1100; /* 比 Modal 高 */
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            backdrop-filter: blur(5px);
+        }
+        .search-wrapper-float {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -182,7 +197,7 @@
 <div id="flashOverlay" class="flash-overlay"></div>
 
 <div class="header">
-    <h1>📦 盤點 V2.5</h1>
+    <h1>📦 盤點 V2.7</h1>
     <div class="header-tools">
         <label class="btn-tool btn-file-wrapper">
             📄 匯入
@@ -211,12 +226,26 @@
 </div>
 
 <div class="search-box">
-    <input type="text" class="search-input" inputmode="numeric" pattern="[0-9]*" placeholder="🔍 輸入代號後幾碼..." oninput="filterList(this.value)">
+    <input type="text" id="mainSearchInput" class="search-input" inputmode="numeric" pattern="[0-9]*" placeholder="🔍 輸入代號後幾碼..." oninput="syncSearch(this.value)">
 </div>
 
 <div class="item-list" id="itemList">
     <div style="text-align:center; color:#999; padding: 40px 20px;">
         請點擊右上方「📄匯入」載入 Excel
+    </div>
+</div>
+
+<button class="btn-float-search" id="fabSearch" onclick="openSearchOverlay()">
+    🔍
+</button>
+
+<div class="search-overlay" id="searchOverlay" onclick="closeSearchOverlay(event)">
+    <div class="search-wrapper-float" onclick="event.stopPropagation()">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+            <h3 style="margin:0; font-size:16px;">快速搜尋</h3>
+            <button onclick="closeSearchOverlay()" style="border:none; background:none; font-size:24px; color:#666;">&times;</button>
+        </div>
+        <input type="text" id="floatSearchInput" class="search-input" inputmode="numeric" pattern="[0-9]*" placeholder="🔍 輸入代號..." oninput="syncSearch(this.value)">
     </div>
 </div>
 
@@ -272,6 +301,36 @@
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
+
+    // V2.7: 滾動監聽
+    window.addEventListener('scroll', () => {
+        const fab = document.getElementById('fabSearch');
+        if (window.scrollY > 150) {
+            fab.classList.add('show');
+        } else {
+            fab.classList.remove('show');
+        }
+    });
+
+    // V2.7: 同步兩個搜尋框
+    function syncSearch(val) {
+        document.getElementById('mainSearchInput').value = val;
+        document.getElementById('floatSearchInput').value = val;
+        renderList(val);
+    }
+
+    function openSearchOverlay() {
+        const overlay = document.getElementById('searchOverlay');
+        const floatInput = document.getElementById('floatSearchInput');
+        overlay.style.display = 'flex';
+        // 延遲聚焦，確保鍵盤彈出
+        setTimeout(() => floatInput.focus(), 100);
+    }
+
+    function closeSearchOverlay(e) {
+        if (e && e.target !== e.currentTarget && e.target.tagName !== 'BUTTON') return;
+        document.getElementById('searchOverlay').style.display = 'none';
+    }
 
     function getValue(row, possibleNames) {
         for (let name of possibleNames) { if (row[name] !== undefined) return row[name]; }
@@ -339,6 +398,12 @@
     function renderList(filterText = '') {
         const container = document.getElementById('itemList');
         container.innerHTML = '';
+
+        if (inventoryData.length === 0) {
+             container.innerHTML = `<div style="text-align:center; color:#999; padding: 40px 20px;">請點擊右上方「📄匯入」載入 Excel</div>`;
+             return;
+        }
+        
         let filtered = inventoryData.filter(item => 
             item.code.toLowerCase().includes(filterText.toLowerCase()) || 
             item.name.toLowerCase().includes(filterText.toLowerCase())
@@ -394,7 +459,7 @@
         filterMode = mode;
         document.getElementById('tabAll').className = mode === 'all' ? 'mini-stat active' : 'mini-stat';
         document.getElementById('tabUnfinished').className = mode === 'unfinished' ? 'mini-stat active' : 'mini-stat';
-        renderList(document.querySelector('.search-input').value);
+        renderList(document.getElementById('mainSearchInput').value);
     }
 
     function openEditModal(index) {
@@ -410,7 +475,7 @@
         const currentAct = item.counted ? item.actQty : 0;
         document.getElementById('modalQty').value = currentAct;
         
-        syncInputToStats(); // 同步顯示數據
+        syncInputToStats(); 
         document.getElementById('editModal').style.display = 'flex';
     }
 
@@ -453,16 +518,12 @@
         inventoryData[currentEditIndex].actQty = qty;
         inventoryData[currentEditIndex].counted = true;
         closeModal();
+        closeSearchOverlay(); // 儲存時也關閉浮動搜尋
         
-        // V2.5 修正：儲存後自動清空搜尋框，並重置列表
-        const searchInput = document.querySelector('.search-input');
-        if (searchInput.value !== '') {
-            searchInput.value = '';
-            renderList(''); // 傳入空字串代表顯示全部
-        } else {
-            // 如果原本就沒搜尋，就單純更新畫面
-            renderList('');
-        }
+        // 清空所有搜尋框
+        document.getElementById('mainSearchInput').value = '';
+        document.getElementById('floatSearchInput').value = '';
+        renderList(''); 
     }
 
     function closeModal() {
@@ -506,7 +567,8 @@
             triggerFlash('success');
             showToast(`✅ ${item.name} (+1)`);
             updateStats();
-            renderList(document.querySelector('.search-input').value);
+            // 掃描時也要更新兩個搜尋框的列表狀態（雖然通常掃描時搜尋框是空的）
+            renderList(document.getElementById('mainSearchInput').value);
         } else {
             playBeep('error');
             triggerFlash('error');
