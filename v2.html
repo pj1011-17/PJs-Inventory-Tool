@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 V2</title>
+    <title>盤點小工具 V2.1</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     
@@ -17,7 +17,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        :root { --primary: #0ABAB5; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
+        :root { --primary: #0ABAB5; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --blue: #3b82f6; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
         
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -26,11 +26,10 @@
             color: var(--text); 
             padding-bottom: 80px;
             padding-top: env(safe-area-inset-top); 
-            /* 防止連續點擊縮放 */
             touch-action: manipulation;
         }
 
-        /* V2 改版：Header 整合功能按鈕 */
+        /* Header */
         .header { 
             background: var(--primary); 
             color: white; 
@@ -39,56 +38,37 @@
             justify-content: space-between; 
             align-items: center; 
         }
-        .header h1 { margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+        .header h1 { margin: 0; font-size: 18px; font-weight: 700; }
         .header-tools { display: flex; gap: 10px; }
         .btn-tool { 
-            background: rgba(255,255,255,0.2); 
-            border: 1px solid rgba(255,255,255,0.4); 
-            color: white; 
-            padding: 5px 10px; 
-            border-radius: 6px; 
-            font-size: 12px; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            gap: 4px;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); 
+            color: white; padding: 5px 10px; border-radius: 6px; font-size: 12px; 
+            cursor: pointer; display: flex; align-items: center; gap: 4px;
         }
         .btn-file-wrapper { position: relative; overflow: hidden; }
         .btn-file-wrapper input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
-        /* V2 改版：Sticky Stats Bar (黏性數據列) */
+        /* Sticky Stats Bar */
         .sticky-stats {
-            position: sticky;
-            top: 0; /* 吸附在頂部 (如果是iOS, 可能需要調整 top 值配合 safe-area) */
-            z-index: 90;
-            background: var(--bg);
-            padding: 10px 15px;
+            position: sticky; top: 0; z-index: 90;
+            background: var(--bg); padding: 10px 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
         }
         .mini-stat {
-            background: white;
-            padding: 8px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #e5e7eb;
-            cursor: pointer;
+            background: white; padding: 8px; border-radius: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid #e5e7eb; cursor: pointer;
         }
         .mini-stat.active { border-color: var(--primary); background: #e0f2f1; }
         .mini-stat-label { font-size: 13px; color: #666; }
         .mini-stat-val { font-size: 18px; font-weight: bold; }
 
-        /* 掃描與搜尋區 */
+        /* Scan & Search */
         .scan-section { padding: 0 15px; margin-top: 10px; }
         .btn-scan { 
-            width: 100%; padding: 15px; 
-            background: var(--text); color: white; 
-            border: none; border-radius: 8px; 
-            font-weight: bold; font-size: 18px; 
+            width: 100%; padding: 15px; background: var(--text); color: white; 
+            border: none; border-radius: 8px; font-weight: bold; font-size: 18px; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
@@ -99,28 +79,26 @@
 
         #reader { width: 100%; margin-bottom: 0; display: none; background: black; border-radius: 0 0 8px 8px; }
 
-        /* 列表樣式 */
+        /* List Styling (V2.1 改版重點) */
         .item-list { padding: 0 15px; }
         .item-card { 
-            background: var(--card); 
-            padding: 12px; 
-            margin-bottom: 8px; 
-            border-radius: 8px; 
-            border-left: 4px solid #ddd; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
+            background: var(--card); padding: 12px; margin-bottom: 8px; 
+            border-radius: 8px; border-left: 4px solid #ddd; 
+            display: flex; justify-content: space-between; align-items: center; 
             box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
         }
         .item-card.done { border-left-color: var(--success); }
         .item-card.error { border-left-color: var(--danger); background-color: #fef2f2; }
+        .item-card.over { border-left-color: var(--blue); background-color: #eff6ff; } /* 超出的藍色 */
+
         .item-info h3 { margin: 0 0 3px 0; font-size: 15px; }
         .item-info p { margin: 0; font-size: 13px; color: #6b7280; font-family: monospace; } 
-        .item-count { text-align: right; }
-        .count-badge { font-size: 18px; font-weight: bold; }
-        .system-count { font-size: 13px; color: #9ca3af; } 
+        
+        .item-count { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
+        .diff-badge { font-size: 20px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+        .sub-count { font-size: 12px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; }
 
-        /* V2 改版：Modal 優化 */
+        /* Modal V2.1 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: flex-end; }
         .modal { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; box-sizing: border-box; padding-bottom: 40px; }
         
@@ -128,39 +106,35 @@
         .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
         .modal-code { font-family: monospace; color: #666; font-size: 14px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
         
-        /* 對照表格 */
-        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; text-align: center; }
-        .compare-box { background: #f9fafb; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
-        .compare-label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
-        .compare-val { font-size: 24px; font-weight: bold; color: var(--text); }
-        .compare-val.sys { color: #6b7280; }
-        .compare-val.act { color: var(--primary); }
+        /* Modal Stats (縮小版) */
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .compare-box { background: #f9fafb; padding: 8px; border-radius: 6px; border: 1px solid #eee; text-align: center; }
+        .compare-label { font-size: 12px; color: #666; display: block; }
+        .compare-val { font-size: 18px; font-weight: bold; color: var(--text); }
+        .compare-val.rem { color: var(--danger); }
 
-        /* 調整輸入控制項 */
-        .control-group { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 20px; }
+        /* 快速修正按鈕 */
+        .btn-quick-correct { width: 100%; padding: 10px; background: var(--warning); color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; font-size: 15px; cursor: pointer; }
+
+        /* Control Group */
+        .control-group { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px; }
         .btn-circle { 
-            width: 45px; height: 45px; border-radius: 50%; border: none; 
-            font-size: 20px; font-weight: bold; cursor: pointer;
+            width: 50px; height: 50px; border-radius: 50%; border: none; 
+            font-size: 24px; font-weight: bold; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             background: #eee; color: #333;
         }
-        .qty-input-sm { 
-            width: 80px; height: 45px; 
-            font-size: 22px; text-align: center; 
-            border: 2px solid var(--primary); border-radius: 8px; 
+        /* 輸入框即為已盤數量 */
+        .qty-input-main { 
+            width: 100px; height: 50px; 
+            font-size: 28px; text-align: center; font-weight: bold;
+            border: 2px solid var(--primary); border-radius: 8px; background: #fff;
         }
 
-        .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .btn-modal { padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; color: white; }
 
-        /* V2：全螢幕閃爍特效 (Flash) */
-        .flash-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* 讓點擊穿透 */
-            z-index: 2000;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
+        .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
         
         .toast {
             position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); 
@@ -175,7 +149,7 @@
 <div id="flashOverlay" class="flash-overlay"></div>
 
 <div class="header">
-    <h1>📦 盤點 V2</h1>
+    <h1>📦 盤點 V2.1</h1>
     <div class="header-tools">
         <label class="btn-tool btn-file-wrapper">
             📄 匯入
@@ -204,7 +178,7 @@
 </div>
 
 <div class="search-box">
-    <input type="text" class="search-input" placeholder="🔍 輸入代號或品名..." oninput="filterList(this.value)">
+    <input type="text" class="search-input" inputmode="numeric" pattern="[0-9]*" placeholder="🔍 輸入代號後幾碼..." oninput="filterList(this.value)">
 </div>
 
 <div class="item-list" id="itemList">
@@ -225,17 +199,21 @@
         <div class="compare-grid">
             <div class="compare-box">
                 <span class="compare-label">系統應有</span>
-                <span class="compare-val sys" id="modalSys">10</span>
+                <span class="compare-val" id="modalSys" style="color:#666">10</span>
             </div>
-            <div class="compare-box" style="border-color: var(--primary); background: #f0fdf4;">
-                <span class="compare-label">目前已盤</span>
-                <span class="compare-val act" id="modalAct">10</span>
+            <div class="compare-box">
+                <span class="compare-label">剩餘未盤</span>
+                <span class="compare-val rem" id="modalRem">5</span>
             </div>
         </div>
 
+        <button class="btn-quick-correct" onclick="quickCorrect()">
+            ⚡ 一鍵正確 (補滿 <span id="btnQuickQty"></span>)
+        </button>
+
         <div class="control-group">
             <button class="btn-circle" onclick="adjustQty(-1)">-</button>
-            <input type="number" id="modalQty" class="qty-input-sm" value="0" inputmode="numeric" onclick="this.select()">
+            <input type="number" id="modalQty" class="qty-input-main" value="0" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" oninput="updateModalRem()">
             <button class="btn-circle" onclick="adjustQty(1)">+</button>
         </div>
         
@@ -255,50 +233,35 @@
     let currentEditIndex = -1;
     let filterMode = 'all';
 
-    // 音效 Context
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    const SYSTEM_COLUMNS = {
-        code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量']   
-    };
+    const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
 
     function getValue(row, possibleNames) {
-        for (let name of possibleNames) {
-            if (row[name] !== undefined) return row[name];
-        }
+        for (let name of possibleNames) { if (row[name] !== undefined) return row[name]; }
         return null;
     }
 
-    // --- 音效產生器 ---
     function playBeep(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-        
         if (type === 'success') {
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime); // 高音
+            oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
             gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1);
+            oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.1);
         } else {
-            oscillator.type = 'sawtooth'; // 鋸齒波比較刺耳
-            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime); // 低音
+            oscillator.type = 'sawtooth'; oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
             gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.3);
+            oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.3);
         }
     }
 
-    // --- 視覺閃爍 ---
     function triggerFlash(color) {
         const overlay = document.getElementById('flashOverlay');
         overlay.style.backgroundColor = color === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)';
-        overlay.style.boxShadow = color === 'success' ? 'inset 0 0 50px #22c55e' : 'inset 0 0 50px #ef4444';
-        overlay.style.opacity = 1;
-        setTimeout(() => { overlay.style.opacity = 0; }, 300);
+        overlay.style.opacity = 1; setTimeout(() => { overlay.style.opacity = 0; }, 300);
     }
 
     function handleFile(input) {
@@ -311,16 +274,12 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const json = XLSX.utils.sheet_to_json(sheet);
-                
                 if (json.length === 0) { alert("❌ 空檔案"); return; }
+                
                 const firstRow = json[0];
                 const hasCode = getValue(firstRow, SYSTEM_COLUMNS.code) !== null;
                 const hasName = getValue(firstRow, SYSTEM_COLUMNS.name) !== null;
-
-                if (!hasCode && !hasName) {
-                    alert("❌ 格式錯誤！找不到「產品代號」或「產品名稱」");
-                    input.value = ''; return;
-                }
+                if (!hasCode && !hasName) { alert("❌ 格式錯誤！"); input.value = ''; return; }
                 
                 inventoryData = json.map(row => {
                     const rawCode = getValue(row, SYSTEM_COLUMNS.code);
@@ -330,23 +289,19 @@
                         code: rawCode ? String(rawCode).trim() : '', 
                         name: rawName ? String(rawName).trim() : '未命名',
                         sysQty: rawQty ? Math.floor(Number(rawQty)) : 0,
-                        actQty: 0, 
-                        counted: false 
+                        actQty: 0, counted: false 
                     };
                 }).filter(item => item.code !== '');
-
                 setFilterMode('all');
                 alert(`✅ 載入 ${inventoryData.length} 筆資料`);
             } catch(err) { alert("❌ 讀取失敗"); }
         };
-        reader.readAsArrayBuffer(file);
-        input.value = ''; 
+        reader.readAsArrayBuffer(file); input.value = ''; 
     }
 
     function renderList(filterText = '') {
         const container = document.getElementById('itemList');
         container.innerHTML = '';
-        
         let filtered = inventoryData.filter(item => 
             item.code.toLowerCase().includes(filterText.toLowerCase()) || 
             item.name.toLowerCase().includes(filterText.toLowerCase())
@@ -364,16 +319,21 @@
         filtered.forEach((item) => {
             const realIndex = inventoryData.indexOf(item);
             let statusClass = 'todo';
-            let badgeColor = '#ddd'; 
-            let countDisplay = '-';
-
+            
+            // 計算剩餘未盤
+            const remaining = item.sysQty - item.actQty;
+            let remColor = 'var(--danger)'; // 預設紅色 (還沒盤完)
+            
             if (item.counted) {
-                countDisplay = item.actQty;
-                if (item.actQty === item.sysQty) {
-                    statusClass = 'done'; badgeColor = 'var(--success)';
+                if (remaining === 0) {
+                    statusClass = 'done'; remColor = 'var(--success)'; // 綠色 (盤對了)
+                } else if (remaining < 0) {
+                    statusClass = 'over'; remColor = 'var(--blue)'; // 藍色 (盤多了)
                 } else {
-                    statusClass = 'error'; badgeColor = 'var(--danger)';
+                    statusClass = 'error'; // 紅色 (有盤但數量不對)
                 }
+            } else {
+                 // 沒盤過，依然是紅色
             }
 
             const div = document.createElement('div');
@@ -386,8 +346,8 @@
                     <p>${item.code}</p>
                 </div>
                 <div class="item-count">
-                    <span class="count-badge" style="color:${item.counted ? badgeColor : 'black'}">${countDisplay}</span>
-                    <div class="system-count">/ ${item.sysQty}</div>
+                    <span class="diff-badge" style="color:${remColor}">${remaining}</span>
+                    <span class="sub-count">已: ${item.actQty} / 應: ${item.sysQty}</span>
                 </div>`;
             container.appendChild(div);
         });
@@ -408,21 +368,35 @@
         renderList(document.querySelector('.search-input').value);
     }
 
-    // --- Modal 操作 ---
     function openEditModal(index) {
-        // 手動點擊時，如果是掃描模式，先暫停掃描避免干擾
         if(isScanning && html5QrCode) html5QrCode.pause();
-
         currentEditIndex = index;
         const item = inventoryData[index];
         
         document.getElementById('modalName').innerText = item.name;
         document.getElementById('modalCode').innerText = item.code;
         document.getElementById('modalSys').innerText = item.sysQty;
-        document.getElementById('modalAct').innerText = item.counted ? item.actQty : 0;
-        document.getElementById('modalQty').value = item.counted ? item.actQty : 0; // 預設為0或已盤量，方便修改
+        document.getElementById('btnQuickQty').innerText = item.sysQty;
+
+        const currentAct = item.counted ? item.actQty : 0;
+        document.getElementById('modalQty').value = currentAct;
         
+        updateModalRem(); // 計算剩餘
         document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function updateModalRem() {
+        if (currentEditIndex === -1) return;
+        const item = inventoryData[currentEditIndex];
+        const currentInput = Number(document.getElementById('modalQty').value);
+        const rem = item.sysQty - currentInput;
+        const remEl = document.getElementById('modalRem');
+        remEl.innerText = rem;
+        
+        // 變色邏輯
+        if(rem === 0) remEl.style.color = 'var(--success)';
+        else if (rem < 0) remEl.style.color = 'var(--blue)';
+        else remEl.style.color = 'var(--danger)';
     }
 
     function adjustQty(delta) {
@@ -430,6 +404,15 @@
         let val = Number(input.value) + delta;
         if(val < 0) val = 0;
         input.value = val;
+        updateModalRem();
+    }
+
+    function quickCorrect() {
+        if (currentEditIndex === -1) return;
+        const item = inventoryData[currentEditIndex];
+        // 一鍵正確：直接把已盤數量 = 系統數量
+        document.getElementById('modalQty').value = item.sysQty;
+        saveQty(); 
     }
 
     function saveQty() {
@@ -444,15 +427,12 @@
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
         currentEditIndex = -1;
-        // 關閉視窗後，恢復掃描
         if(isScanning && html5QrCode) html5QrCode.resume();
     }
 
-    // --- 連續掃描核心邏輯 ---
     async function toggleScanner() {
         const btn = document.getElementById('scanBtn');
         const readerDiv = document.getElementById('reader');
-        
         if (isScanning) {
             if (html5QrCode) { await html5QrCode.stop(); html5QrCode.clear(); }
             readerDiv.style.display = 'none';
@@ -465,42 +445,28 @@
             btn.innerHTML = '⏹ 停止掃描';
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-            // 啟動音效 Context (因為瀏覽器需要使用者互動才能播音)
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
             isScanning = true;
         }
     }
 
     function onScanSuccess(decodedText, decodedResult) {
-        // 防連點機制：同一條碼 1秒內不重複掃 (防止手震連掃)
         const now = Date.now();
         if (decodedText === lastScannedCode && now - lastScanTime < 1000) return;
-        
         lastScannedCode = decodedText;
         lastScanTime = now;
 
         const item = inventoryData.find(i => i.code === decodedText);
-        
         if (item) {
-            // 找到商品：自動 +1
             item.actQty++;
             item.counted = true;
-            
-            // 觸發成功回饋
             playBeep('success');
             triggerFlash('success');
             showToast(`✅ ${item.name} (+1)`);
-            
-            // 更新列表 (但不重新渲染整個列表以免卡頓，只更新數據)
             updateStats();
-            // 如果剛好搜尋框沒字，可以嘗試更新畫面，或用更輕量的方式更新
-            // 為了效能，這裡我們只更新數據，使用者如果想確認可以暫停掃描看列表
-            renderList(document.querySelector('.search-input').value); 
-            
+            renderList(document.querySelector('.search-input').value);
         } else {
-            // 找不到商品
             playBeep('error');
             triggerFlash('error');
             showToast(`❌ 未知代號：${decodedText}`);
@@ -513,12 +479,9 @@
         toast.style.display = 'block';
         setTimeout(() => { toast.style.display = 'none'; }, 1500);
     }
-
-    function filterList(val) { renderList(val); }
     
-    function resetAll() {
-        if(confirm('確定要清空所有資料嗎？')) { inventoryData = []; renderList(); updateStats(); }
-    }
+    function filterList(val) { renderList(val); }
+    function resetAll() { if(confirm('清空所有資料？')) { inventoryData = []; renderList(); updateStats(); } }
 </script>
 </body>
 </html>
