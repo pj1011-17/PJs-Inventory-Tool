@@ -199,7 +199,7 @@
 
 <div class="item-list" id="itemList">
     <div style="text-align:center; color:#999; padding: 40px 20px;">
-        請點擊右上方「匯入」載入 Excel
+        請點擊右上方「📄匯入」載入 Excel
     </div>
 </div>
 
@@ -228,7 +228,7 @@
         </div>
 
         <button class="btn-quick-correct" onclick="quickCorrect()">
-            ⚡ 一鍵正確 (補滿 <span id="btnQuickQty"></span>)
+            ⚡ 一鍵正確 (<span id="btnQuickQty"></span>個)
         </button>
 
         <div class="control-group">
@@ -294,12 +294,12 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const json = XLSX.utils.sheet_to_json(sheet);
-                if (json.length === 0) { alert("❌ 空檔案"); return; }
+                if (json.length === 0) { alert("❌ 空白檔案"); return; }
                 
                 const firstRow = json[0];
                 const hasCode = getValue(firstRow, SYSTEM_COLUMNS.code) !== null;
                 const hasName = getValue(firstRow, SYSTEM_COLUMNS.name) !== null;
-                if (!hasCode && !hasName) { alert("❌ 格式錯誤！"); input.value = ''; return; }
+                if (!hasCode && !hasName) { alert("❌ 格式錯誤"); input.value = ''; return; }
                 
                 inventoryData = json.map(row => {
                     const rawCode = getValue(row, SYSTEM_COLUMNS.code);
