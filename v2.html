@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.0.2 (Exp)</title>
+    <title>盤點小工具 v2.0.3</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -59,7 +59,7 @@
             font-weight: 400;
             letter-spacing: 0.5px;
             color: rgba(255,255,255,0.9);
-            margin-top: 4px; /* 微調位置 */
+            margin-top: 4px; 
         }
 
         .header-tools { display: flex; gap: 10px; }
@@ -111,7 +111,7 @@
         }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
-        /* 懸浮按鈕 (SVG 版本) */
+        /* 懸浮按鈕 (SVG 版本 + 鎖定位置) */
         .btn-fab-scan {
             position: fixed !important; 
             bottom: 36px !important;    
@@ -130,7 +130,6 @@
             z-index: 9999;
             transition: transform 0.1s;
             
-            /* 移除所有 padding 修正，讓 Flexbox 自動置中 */
             padding: 0; 
         }
 
@@ -140,7 +139,7 @@
         }
         
         .btn-fab-scan:active { transform: scale(0.95); }
-        .btn-fab-scan svg { display: block; } /* 確保 SVG 不會亂跑 */
+        .btn-fab-scan svg { display: block; } 
 
         /* List Styling */
         .item-list { padding: 0 15px; }
@@ -177,16 +176,27 @@
         
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
         
+        /* 👇 修改後的 Toast 樣式 */
         .toast { 
-            position: fixed; bottom: 100px; 
-            left: 50%; transform: translateX(-50%); 
-            background-color: rgba(0, 0, 0, 0.85); color: white; 
-            padding: 12px 24px; border-radius: 30px; font-size: 16px; 
-            z-index: 3000; display: none; 
+            position: fixed; 
+            /* 計算方式：瀏海(env) + Header固定區(170px) + 往下的距離(210px) = 落在相機畫面下方 */
+            top: calc(170px + env(safe-area-inset-top) + 210px);
+            left: 50%; 
+            transform: translateX(-50%); 
+            
+            background-color: rgba(0, 0, 0, 0.85); 
+            color: white; 
+            padding: 12px 24px; 
+            border-radius: 30px; 
+            font-size: 18px; /* 👈 字體放大到 18px */
+            z-index: 3000; 
+            display: none; 
             white-space: nowrap; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
             text-align: center;
-            width: fit-content; max-width: 90%;
+            width: fit-content; 
+            max-width: 90%;
+            pointer-events: none; /* 避免擋到點擊 */
         }
     </style>
 </head>
@@ -198,7 +208,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.0.2</span>
+            <span class="version-badge">v2.0.3</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -295,7 +305,7 @@
     let currentEditIndex = -1;
     let filterMode = 'all';
 
-    // 🔴 智能收折邏輯
+    // 智能收折邏輯
     let lastScrollY = 0;
     document.addEventListener("DOMContentLoaded", () => {
         const fixedGroup = document.querySelector('.fixed-group');
@@ -373,7 +383,10 @@
                     };
                 }).filter(item => item.code !== '');
                 setFilterMode('all');
-                showToast(`✅ 已載入 ${inventoryData.length} 筆資料`);
+                
+                // 👇 改用原生 alert
+                alert(`✅ 已載入 ${inventoryData.length} 筆資料`);
+                
             } catch(err) { alert("❌ 讀取失敗"); }
         };
         reader.readAsArrayBuffer(file); input.value = ''; 
@@ -502,11 +515,10 @@
         if(isScanning && html5QrCode) html5QrCode.resume();
     }
 
-    // 👇 這裡大幅修改：控制 SVG 圖示的顯示與隱藏
     async function toggleScanner() {
         const btn = document.getElementById('fabScan');
-        const iconCamera = document.getElementById('iconCamera'); // 相機圖示
-        const iconStop = document.getElementById('iconStop');     // 停止圖示
+        const iconCamera = document.getElementById('iconCamera');
+        const iconStop = document.getElementById('iconStop');
         
         const readerDiv = document.getElementById('reader');
         const section = document.getElementById('scanSection');
@@ -517,7 +529,6 @@
             readerDiv.style.display = 'none';
             btn.classList.remove('active');
             
-            // 👇 切換圖示：顯示相機，隱藏停止
             iconCamera.style.display = 'block';
             iconStop.style.display = 'none';
             
@@ -527,7 +538,6 @@
             readerDiv.style.display = 'block';
             btn.classList.add('active');
             
-            // 👇 切換圖示：隱藏相機，顯示停止
             iconCamera.style.display = 'none';
             iconStop.style.display = 'block';
             
@@ -552,7 +562,10 @@
             item.counted = true;
             playBeep('success');
             triggerFlash('success');
-            showToast(`✅ ${item.name} (+1)`);
+            
+            // 👇 修改這裡：格式改成 "品名 +1 (總數量 個)"
+            showToast(`✅ ${item.name} +1 (${item.actQty}個)`);
+            
             updateStats();
             renderList(document.getElementById('mainSearchInput').value);
         } else {
