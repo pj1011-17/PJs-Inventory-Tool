@@ -113,36 +113,39 @@
         }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
-        /* 懸浮按鈕 (強制鎖定 + 修正圖示位置) */
+        /* 1. 相機按鈕 (改回歸零，只留一點點頂部空間給 iPhone) */
         .btn-fab-scan {
             position: fixed !important; 
-            bottom: 36px !important;    
-            left: 30px !important;      
-            
+            bottom: 60px !important;    
+            left: 24px !important;      
+    
             width: 56px; height: 56px;
             border-radius: 50%; 
-            background: var(--text); 
+            background: var(--text);
             color: white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
             border: none;
-            
+    
             display: flex; 
             align-items: center; 
             justify-content: center;
             font-size: 26px; 
             z-index: 9999;
             transition: transform 0.1s;
-            
-            /* 相機置中修正 */
-            padding-bottom: 10px; 
+    
+        /* 👇👇👇 重點修改：歸零，只給 2px 讓 iPhone 視覺置中 👇👇👇 */
+            padding: 0; 
+            padding-top: 2px;
             line-height: 1;
         }
 
-        .btn-fab-scan.active { 
-            background: var(--danger); 
-            /* 停止按鈕置中修正 */
-            padding-bottom: 0; 
-            padding-top: 2px; 
+        /* 2. 停止按鈕 (跟上面保持一致即可) */
+            .btn-fab-scan.active { 
+                background: var(--danger); 
+    
+        /* 👇👇👇 重點修改：保持跟上面一樣 */
+            padding: 0;
+            padding-top: 2px;
         }
         
         .btn-fab-scan:active { transform: scale(0.95); }
@@ -569,3 +572,4 @@
 </script>
 </body>
 </html>
+
