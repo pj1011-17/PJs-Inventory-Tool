@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.0.3</title>
+    <title>盤點小工具 v2.0.4</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -176,7 +176,7 @@
         
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
         
-        /* 👇 修改後的 Toast 樣式 */
+        /* 👇 Toast 樣式調整：位置不變，但字體改回 16px */
         .toast { 
             position: fixed; 
             /* 計算方式：瀏海(env) + Header固定區(170px) + 往下的距離(210px) = 落在相機畫面下方 */
@@ -188,7 +188,7 @@
             color: white; 
             padding: 12px 24px; 
             border-radius: 30px; 
-            font-size: 18px; /* 👈 字體放大到 18px */
+            font-size: 16px; /* 👈 字體改回 16px */
             z-index: 3000; 
             display: none; 
             white-space: nowrap; 
@@ -196,7 +196,7 @@
             text-align: center;
             width: fit-content; 
             max-width: 90%;
-            pointer-events: none; /* 避免擋到點擊 */
+            pointer-events: none; 
         }
     </style>
 </head>
@@ -208,7 +208,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.0.3</span>
+            <span class="version-badge">v2.0.4</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -384,7 +384,6 @@
                 }).filter(item => item.code !== '');
                 setFilterMode('all');
                 
-                // 👇 改用原生 alert
                 alert(`✅ 已載入 ${inventoryData.length} 筆資料`);
                 
             } catch(err) { alert("❌ 讀取失敗"); }
@@ -392,24 +391,45 @@
         reader.readAsArrayBuffer(file); input.value = ''; 
     }
 
+    // 👇 修改後的 renderList：包含「匯入提示」、「完工恭喜」、「無搜尋結果」邏輯
     function renderList(filterText = '') {
         const container = document.getElementById('itemList');
         container.innerHTML = '';
+        
+        // 1. 完全沒資料 (剛打開)
         if (inventoryData.length === 0) {
              container.innerHTML = `<div style="text-align:center; color:#999; padding: 40px 20px;">請點擊右上方「📄匯入」載入 Excel</div>`;
              return;
         }
+        
         let filtered = inventoryData.filter(item => 
             item.code.toLowerCase().includes(filterText.toLowerCase()) || 
             item.name.toLowerCase().includes(filterText.toLowerCase())
         );
+        
         if (filterMode === 'unfinished') {
             filtered = filtered.filter(item => !(item.counted && item.actQty === item.sysQty));
         }
+        
+        // 2. 列表為空
         if (filtered.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:#999; padding: 20px;">無符合項目</div>`;
+            // 情況 A: 有在搜尋關鍵字 -> 顯示「無符合項目」
+            if (filterText.trim() !== '') {
+                container.innerHTML = `<div style="text-align:center; color:#999; padding: 20px;">🔍 無符合項目</div>`;
+            } 
+            // 情況 B: 沒搜尋 + 在未盤分頁 + 列表空 -> 顯示「完工恭喜」
+            else if (filterMode === 'unfinished') {
+                container.innerHTML = `<div style="text-align:center; color:var(--success); padding: 40px 20px; font-weight:bold; font-size:18px;">
+                    🎉 恭喜！已盤點完全部項目！
+                </div>`;
+            }
+            // 情況 C: 其他 (通常不會發生，做個保險)
+            else {
+                container.innerHTML = `<div style="text-align:center; color:#999; padding: 20px;">無符合項目</div>`;
+            }
             return;
         }
+        
         filtered.forEach((item) => {
             const realIndex = inventoryData.indexOf(item);
             let statusClass = 'todo';
@@ -563,8 +583,9 @@
             playBeep('success');
             triggerFlash('success');
             
-            // 👇 修改這裡：格式改成 "品名 +1 (總數量 個)"
-            showToast(`✅ ${item.name} +1 (${item.actQty}個)`);
+            // 👇 修改這裡：品名只取前 8 個字，如果超過就加 ...
+            const displayName = item.name.length > 8 ? item.name.substring(0, 8) + '...' : item.name;
+            showToast(`✅ ${displayName} +1 (${item.actQty}個)`);
             
             updateStats();
             renderList(document.getElementById('mainSearchInput').value);
