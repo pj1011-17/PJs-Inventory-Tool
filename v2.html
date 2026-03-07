@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.2.0</title>
+    <title>盤點小工具 v2.2.1</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -26,7 +26,6 @@
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: var(--bg); margin: 0; padding: 0; color: var(--text); 
-            /* 配合新增的橫幅，頂部空間從 170px 改為 210px */
             padding-top: calc(210px + env(safe-area-inset-top)); 
             padding-bottom: 80px; 
             min-height: 100vh;
@@ -105,7 +104,7 @@
             background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
-        /* 4. 上一個盤點物品橫幅 (新增) */
+        /* 4. 上一個盤點物品橫幅 */
         .last-scanned-banner {
             background: #e0f2f1; 
             padding: 8px 15px; 
@@ -214,7 +213,6 @@
         
         .toast { 
             position: fixed; 
-            /* 配合上方橫幅，提示框位置也稍微下移 */
             top: calc(210px + env(safe-area-inset-top) + 170px);
             left: 50%; 
             transform: translateX(-50%); 
@@ -243,7 +241,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.2.0</span>
+            <span class="version-badge">v2.2.1</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -272,8 +270,8 @@
     </div>
 
     <div id="lastScannedBanner" class="last-scanned-banner">
-        <span class="banner-label">最後掃描</span>
-        <span class="banner-text" id="lastScannedText">尚未掃描任何物品</span>
+        <span class="banner-label">最後盤點</span>
+        <span class="banner-text" id="lastScannedText">尚未盤點任何物品</span>
     </div>
 </div>
 
@@ -376,6 +374,16 @@
         overlay.style.opacity = 1; setTimeout(() => { overlay.style.opacity = 0; }, 300);
     }
 
+    // 👇 新增：獨立處理更新「最後盤點橫幅」的函式
+    function updateLastActionBanner(item) {
+        const bannerText = document.getElementById('lastScannedText');
+        bannerText.innerText = `【${item.code}】${item.name} (${item.actQty}/${item.sysQty})`;
+        
+        const banner = document.getElementById('lastScannedBanner');
+        banner.style.backgroundColor = '#b2dfdb';
+        setTimeout(() => { banner.style.backgroundColor = '#e0f2f1'; }, 300);
+    }
+
     function handleFile(input) {
         const file = input.files[0];
         if (!file) return;
@@ -404,8 +412,8 @@
                 }).filter(item => item.code !== '');
                 setFilterMode('all');
                 
-                // 重置最後掃描狀態
-                document.getElementById('lastScannedText').innerText = '尚未掃描任何物品';
+                // 重置最後盤點狀態
+                document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
                 document.getElementById('lastScannedBanner').style.backgroundColor = '#e0f2f1';
 
                 alert(`✅ 已載入 ${inventoryData.length} 筆資料`);
@@ -502,7 +510,6 @@
         syncInputToStats(); 
         
         document.getElementById('fabScan').style.display = 'none';
-        
         document.getElementById('editModal').style.display = 'flex';
     }
 
@@ -541,6 +548,9 @@
         inventoryData[currentEditIndex].actQty = qty;
         inventoryData[currentEditIndex].counted = true;
         
+        // 👇 新增：手動儲存後，也更新頂部的最後盤點橫幅
+        updateLastActionBanner(inventoryData[currentEditIndex]);
+        
         if (document.activeElement) { document.activeElement.blur(); }
         closeModal();
         
@@ -550,9 +560,7 @@
 
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
-        
         document.getElementById('fabScan').style.display = 'flex';
-        
         currentEditIndex = -1;
         if(isScanning && html5QrCode) html5QrCode.resume();
     }
@@ -607,14 +615,8 @@
             
             showToast(`【${item.code}】+1 (${item.actQty}/${item.sysQty})`);
             
-            // 👇 新增：更新最後掃描橫幅
-            const bannerText = document.getElementById('lastScannedText');
-            bannerText.innerText = `【${item.code}】${item.name} (${item.actQty}/${item.sysQty})`;
-            
-            // 加入輕微的背景閃爍效果提示更新
-            const banner = document.getElementById('lastScannedBanner');
-            banner.style.backgroundColor = '#b2dfdb';
-            setTimeout(() => { banner.style.backgroundColor = '#e0f2f1'; }, 300);
+            // 👇 呼叫更新橫幅函式
+            updateLastActionBanner(item);
 
             updateStats();
             renderList(document.getElementById('mainSearchInput').value);
