@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.3.1</title>
+    <title>盤點小工具 v2.3.2</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -20,16 +20,17 @@
     <style>
         :root { --primary: #0ABAB5; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --blue: #3b82f6; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
         
-        html, body { height: 100%; }
+        /* 確保基本高度滿版，維持穩定 */
+        html { min-height: 100%; }
 
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: var(--bg); margin: 0; padding: 0; color: var(--text); 
             
-            /* 👇 修正：加大頂部預留空間 (從 140px 改為 170px)，避免第一筆資料被橫幅擋住 */
-            padding-top: calc(170px + env(safe-area-inset-top)); 
-            
+            /* 👇 修正：移除 padding-top，改由 sticky 引擎自然推擠，永不重疊 */
+            /* 底部保留空間給搜尋框和相機按鈕 */
             padding-bottom: 110px; 
+            
             min-height: 100vh;
             box-sizing: border-box;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
@@ -37,10 +38,16 @@
         
         input { user-select: text; }
 
-        /* 固定區容器 */
+        /* 👇 修正重點：改用 sticky 黏貼定位，完美解決鍵盤開啟時版面重疊問題 */
         .fixed-group {
-            position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+            position: -webkit-sticky; /* 支援 iOS */
+            position: sticky; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            z-index: 100;
             background: var(--bg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 微微的陰影區隔列表 */
         }
 
         /* 1. Header */
@@ -56,15 +63,8 @@
         }
         
         .version-badge {
-            font-size: 10px;
-            background: rgba(0,0,0,0.2);
-            padding: 2px 6px;
-            border-radius: 12px;
-            margin-left: 6px;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-            color: rgba(255,255,255,0.9);
-            margin-top: 4px; 
+            font-size: 10px; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 12px;
+            margin-left: 6px; font-weight: 400; letter-spacing: 0.5px; color: rgba(255,255,255,0.9); margin-top: 4px; 
         }
 
         .header-tools { display: flex; gap: 10px; }
@@ -82,8 +82,7 @@
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
         }
         .mini-stat {
-            background: white; padding: 8px 10px; 
-            border-radius: 6px;
+            background: white; padding: 8px 10px; border-radius: 6px;
             display: flex; justify-content: space-between; align-items: center;
             border: 1px solid #e5e7eb; cursor: pointer;
         }
@@ -104,20 +103,12 @@
             transition: background-color 0.3s;
         }
         .banner-label {
-            background: var(--primary); 
-            color: white; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            font-size: 11px; 
-            font-weight: bold; 
-            white-space: nowrap;
+            background: var(--primary); color: white; padding: 2px 6px; 
+            border-radius: 4px; font-size: 11px; font-weight: bold; white-space: nowrap;
         }
         .banner-text {
-            font-weight: 600; 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            flex: 1;
+            font-weight: 600; white-space: nowrap; overflow: hidden; 
+            text-overflow: ellipsis; flex: 1;
         }
 
         /* 掃描區塊 (預設隱藏) */
@@ -125,8 +116,7 @@
         .scan-section.show { display: block; }
         
         #reader { 
-            width: 100%; height: 270px; 
-            background: black; border-radius: 12px; 
+            width: 100%; height: 270px; background: black; border-radius: 12px; 
             overflow: hidden; position: relative; 
         }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
@@ -145,34 +135,20 @@
         }
         
         .bottom-search-input {
-            width: 100%;
-            height: 48px;
-            padding: 0 20px;
-            border: none;
-            border-radius: 24px;      
-            font-size: 15px;
-            background: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-            box-sizing: border-box;
-            -webkit-appearance: none;
+            width: 100%; height: 48px; padding: 0 20px; border: none; border-radius: 24px;      
+            font-size: 15px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            box-sizing: border-box; -webkit-appearance: none;
         }
         .bottom-search-input:focus { outline: 2px solid var(--primary); }
 
         /* 懸浮按鈕 */
         .btn-fab-scan {
             position: fixed !important; 
-            bottom: 36px !important;
-            left: 30px !important;      
-            width: 56px; height: 56px;
-            border-radius: 50%; 
-            background: var(--text); 
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
-            border: none;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 9999;
-            transform: translateZ(0); 
-            padding: 0; 
+            bottom: 36px !important; left: 30px !important;      
+            width: 56px; height: 56px; border-radius: 50%; 
+            background: var(--text); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+            border: none; display: flex; align-items: center; justify-content: center;
+            z-index: 9999; transform: translateZ(0); padding: 0; 
         }
         .btn-fab-scan.active { background: var(--danger); padding: 0; }
         .btn-fab-scan:active { transform: scale(0.95); }
@@ -180,6 +156,9 @@
 
         /* List Styling */
         .item-list { padding: 0 15px; }
+        /* 列表容器加一點點上距，避免跟頂部黏太緊 */
+        .item-list-container { padding-top: 8px; } 
+        
         .item-card { background: var(--card); padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .item-card.done { border-left-color: var(--success); }
         .item-card.error { border-left-color: var(--danger); background-color: #fef2f2; }
@@ -214,23 +193,11 @@
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
         
         .toast { 
-            position: fixed; 
-            top: 40%;
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            background-color: rgba(0, 0, 0, 0.85); 
-            color: white; 
-            padding: 12px 24px; 
-            border-radius: 30px; 
-            font-size: 16px; 
-            z-index: 3000; 
-            display: none; 
-            white-space: nowrap; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-            text-align: center;
-            width: fit-content; 
-            max-width: 90%;
-            pointer-events: none; 
+            position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); 
+            background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; 
+            border-radius: 30px; font-size: 16px; z-index: 3000; display: none; 
+            white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+            text-align: center; width: fit-content; max-width: 90%; pointer-events: none; 
         }
     </style>
 </head>
@@ -242,7 +209,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.3.1</span>
+            <span class="version-badge">v2.3.2</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -274,9 +241,11 @@
     <div id="reader"></div>
 </div>
 
-<div class="item-list" id="itemList">
-    <div style="text-align:center; color:#999; padding: 40px 20px;">
-        請點擊右上方「📄匯入」載入 Excel
+<div class="item-list-container">
+    <div class="item-list" id="itemList">
+        <div style="text-align:center; color:#999; padding: 40px 20px;">
+            請點擊右上方「📄匯入」載入 Excel
+        </div>
     </div>
 </div>
 
@@ -343,6 +312,16 @@
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
+
+    // 👇 確保網頁載入後，監聽搜尋框點擊事件，自動滾到最上面
+    document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.getElementById('mainSearchInput');
+        if(searchInput) {
+            searchInput.addEventListener('focus', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+    });
 
     function getValue(row, possibleNames) {
         for (let name of possibleNames) { if (row[name] !== undefined) return row[name]; }
@@ -592,11 +571,23 @@
             iconStop.style.display = 'block';
             
             html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 120 } };
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
-            isScanning = true;
+            const constraintsHigh = { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } };
+            const constraintsBasic = { facingMode: "environment" };
+            const config = { fps: 10, qrbox: { width: 250, height: 120 }, experimentalFeatures: { useBarCodeDetectorIfSupported: true } };
             
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            html5QrCode.start(constraintsHigh, config, onScanSuccess)
+                .catch(err => {
+                    console.log("高畫質啟動失敗，嘗試切換基本模式...", err);
+                    html5QrCode.start(constraintsBasic, config, onScanSuccess)
+                        .catch(err2 => {
+                            alert("相機啟動失敗，請確認權限或使用 Safari/Chrome 瀏覽器");
+                            toggleScanner();
+                        });
+                });
+
+            isScanning = true;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
