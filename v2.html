@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.2.1</title>
+    <title>盤點小工具 v2.2.2</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -241,7 +241,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.2.1</span>
+            <span class="version-badge">v2.2.2</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -374,10 +374,10 @@
         overlay.style.opacity = 1; setTimeout(() => { overlay.style.opacity = 0; }, 300);
     }
 
-    // 👇 新增：獨立處理更新「最後盤點橫幅」的函式
+    // 👇 更新最後盤點橫幅 (移除數量顯示，只保留編號與品名)
     function updateLastActionBanner(item) {
         const bannerText = document.getElementById('lastScannedText');
-        bannerText.innerText = `【${item.code}】${item.name} (${item.actQty}/${item.sysQty})`;
+        bannerText.innerText = `【${item.code}】${item.name}`;
         
         const banner = document.getElementById('lastScannedBanner');
         banner.style.backgroundColor = '#b2dfdb';
@@ -412,7 +412,6 @@
                 }).filter(item => item.code !== '');
                 setFilterMode('all');
                 
-                // 重置最後盤點狀態
                 document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
                 document.getElementById('lastScannedBanner').style.backgroundColor = '#e0f2f1';
 
@@ -548,7 +547,6 @@
         inventoryData[currentEditIndex].actQty = qty;
         inventoryData[currentEditIndex].counted = true;
         
-        // 👇 新增：手動儲存後，也更新頂部的最後盤點橫幅
         updateLastActionBanner(inventoryData[currentEditIndex]);
         
         if (document.activeElement) { document.activeElement.blur(); }
@@ -613,9 +611,9 @@
             playBeep('success');
             triggerFlash('success');
             
-            showToast(`【${item.code}】+1 (${item.actQty}/${item.sysQty})`);
+            // 👇 修改：極簡化掃描成功的提示泡泡文字
+            showToast(`✅ 掃描成功`);
             
-            // 👇 呼叫更新橫幅函式
             updateLastActionBanner(item);
 
             updateStats();
@@ -623,7 +621,8 @@
         } else {
             playBeep('error');
             triggerFlash('error');
-            showToast(`❌ 未知代號：${decodedText}`);
+            // 👇 修改：極簡化掃描失敗的提示泡泡文字
+            showToast(`❌ 掃描失敗`);
         }
     }
 
