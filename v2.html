@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.3.0</title>
+    <title>盤點小工具 v2.3.1</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -26,12 +26,10 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: var(--bg); margin: 0; padding: 0; color: var(--text); 
             
-            /* 👇 修改1：移除了頂部搜尋欄，上方空間縮小到 140px */
-            padding-top: calc(140px + env(safe-area-inset-top)); 
+            /* 👇 修正：加大頂部預留空間 (從 140px 改為 170px)，避免第一筆資料被橫幅擋住 */
+            padding-top: calc(170px + env(safe-area-inset-top)); 
             
-            /* 👇 修改2：為了不讓底部搜尋框擋住最後一個商品，加大底部留白 */
             padding-bottom: 110px; 
-            
             min-height: 100vh;
             box-sizing: border-box;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
@@ -133,35 +131,34 @@
         }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
-        /* 👇 修改3：底部懸浮搜尋區塊 (位於相機 FAB 右側) */
+        /* 底部懸浮搜尋區塊 */
         .bottom-search-wrapper {
             position: fixed !important;
-            bottom: 36px !important;  /* 與 FAB 底部對齊 */
-            left: 96px !important;    /* 避開 FAB (30px + 56px + 10px間距) */
+            bottom: 36px !important;  
+            left: 96px !important;    
             right: 20px !important;
-            height: 56px;             /* 與 FAB 高度一致，方便對齊 */
+            height: 56px;             
             display: flex;
             align-items: center;
             z-index: 99;
-            transform: translateZ(0); /* 硬體加速，防跳動 */
+            transform: translateZ(0); 
         }
         
-        /* 膠囊造型搜尋框 */
         .bottom-search-input {
             width: 100%;
             height: 48px;
             padding: 0 20px;
             border: none;
-            border-radius: 24px;      /* 圓潤的膠囊造型 */
+            border-radius: 24px;      
             font-size: 15px;
             background: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* 加上跟 FAB 一樣的陰影增加懸浮感 */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
             box-sizing: border-box;
             -webkit-appearance: none;
         }
         .bottom-search-input:focus { outline: 2px solid var(--primary); }
 
-        /* 懸浮按鈕 (保持原位不變) */
+        /* 懸浮按鈕 */
         .btn-fab-scan {
             position: fixed !important; 
             bottom: 36px !important;
@@ -218,11 +215,9 @@
         
         .toast { 
             position: fixed; 
-            /* 調整 Toast 位置置中偏上，不會被底部搜尋框擋住 */
             top: 40%;
             left: 50%; 
             transform: translate(-50%, -50%); 
-            
             background-color: rgba(0, 0, 0, 0.85); 
             color: white; 
             padding: 12px 24px; 
@@ -247,7 +242,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.3.0</span>
+            <span class="version-badge">v2.3.1</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -510,7 +505,6 @@
         document.getElementById('modalQty').value = currentAct;
         syncInputToStats(); 
         
-        // 隱藏相機與搜尋按鈕
         document.getElementById('fabScan').style.display = 'none';
         document.getElementById('bottomSearchWrapper').style.display = 'none';
         
@@ -564,7 +558,6 @@
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
         
-        // 恢復顯示
         document.getElementById('fabScan').style.display = 'flex';
         document.getElementById('bottomSearchWrapper').style.display = 'flex';
         
