@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.4.1</title>
+    <title>盤點小工具 v2.5.0</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -20,20 +20,15 @@
     <style>
         :root { --primary: #0ABAB5; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --blue: #3b82f6; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
         
-        /* 👇 修正：移除 html, body { height: 100%; } 避免干擾 iOS 視窗計算 */
-
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: var(--bg); margin: 0; padding: 0; color: var(--text); 
-            padding-top: calc(170px + env(safe-area-inset-top)); 
             
-            /* 👇 修正：底部留白與最小高度導入現代寫法 */
+            /* 👇 修改：頂部元件減少，留白高度縮減至 125px，釋放更多空間給列表 */
+            padding-top: calc(125px + env(safe-area-inset-top)); 
             padding-bottom: calc(110px + env(safe-area-inset-bottom)); 
-            min-height: 100vh;
-            min-height: 100dvh; /* 動態視窗高度，完美解決網址列縮放位移 */
-            
-            box-sizing: border-box;
-            touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
+            min-height: 100vh; min-height: 100dvh; 
+            box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
         }
         
         input { user-select: text; }
@@ -64,28 +59,28 @@
         .btn-file-wrapper { position: relative; overflow: hidden; }
         .btn-file-wrapper input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
-        .stats-bar {
-            background: var(--bg); padding: 8px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        /* 👇 新增：整併後的狀態儀表板 */
+        .status-panel {
+            display: flex; background: white; border-bottom: 1px solid #e5e7eb;
         }
-        .mini-stat {
-            background: white; padding: 8px 10px; border-radius: 6px;
-            display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid #e5e7eb; cursor: pointer;
+        .status-block {
+            padding: 10px 15px; display: flex; flex-direction: column; justify-content: center;
         }
-        .mini-stat.active { border-color: var(--primary); background: #e0f2f1; }
-        .mini-stat-label { font-size: 13px; color: #555; font-weight: 700; } 
-        .mini-stat-val { font-size: 20px; font-weight: 800; color: #333; } 
-
-        .last-scanned-banner {
-            background: #e0f2f1; padding: 8px 15px; font-size: 13px; color: #00796b; 
-            border-top: 1px solid #b2dfdb; display: flex; align-items: center; gap: 8px;
-            transition: background-color 0.3s;
+        .unfinished-block {
+            border-right: 1px solid #eee; min-width: 80px; align-items: center;
         }
-        .banner-label {
-            background: var(--primary); color: white; padding: 2px 6px; 
-            border-radius: 4px; font-size: 11px; font-weight: bold; white-space: nowrap;
+        .last-action-block {
+            flex: 1; min-width: 0; transition: background-color 0.3s;
         }
-        .banner-text { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .status-title {
+            font-size: 11px; color: #6b7280; font-weight: 700; margin-bottom: 2px; text-transform: uppercase;
+        }
+        .status-number {
+            font-size: 22px; font-weight: 800; color: var(--danger); line-height: 1;
+        }
+        .status-text {
+            font-size: 14px; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4;
+        }
 
         .scan-section { padding: 0 10px; margin-bottom: 10px; display: none; }
         .scan-section.show { display: block; }
@@ -93,16 +88,15 @@
         #reader { width: 100%; height: 270px; background: black; border-radius: 12px; overflow: hidden; position: relative; }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
-        /* 👇 修正：底部元件加入 safe-area-inset-bottom 確保實體邊界錨定 */
         .bottom-search-wrapper {
-            position: fixed !important; 
-            bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
+            position: fixed !important; bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
             left: 96px !important; right: 20px !important; height: 56px;             
             display: flex; align-items: center; z-index: 99; transform: translateZ(0); 
         }
         
+        /* 👇 修改：配合頂部元件高度減少，置頂時的 top 座標上移至 110px */
         .bottom-search-wrapper.search-focused {
-            bottom: auto !important; top: calc(145px + env(safe-area-inset-top)) !important; 
+            bottom: auto !important; top: calc(110px + env(safe-area-inset-top)) !important; 
             left: 15px !important; right: 15px !important; z-index: 105 !important; 
         }
 
@@ -114,8 +108,7 @@
         .bottom-search-input:focus { outline: 2px solid var(--primary); }
 
         .btn-fab-scan {
-            position: fixed !important; 
-            bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
+            position: fixed !important; bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
             left: 30px !important;      
             width: 56px; height: 56px; border-radius: 50%; background: var(--text); color: white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: none; display: flex; align-items: center; 
@@ -128,9 +121,9 @@
         .item-list-container { padding-top: 10px; } 
         .item-list { padding: 0 15px; }
         .item-card { background: var(--card); padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .item-card.done { border-left-color: var(--success); }
         .item-card.error { border-left-color: var(--danger); background-color: #fef2f2; }
         .item-card.over { border-left-color: var(--blue); background-color: #eff6ff; } 
+        /* 隱藏已完成的卡片樣式，因為底層邏輯已經直接過濾掉了 */
         .item-info { flex: 1; padding-right: 10px; min-width: 0; }
         .item-info h3 { margin: 0 0 3px 0; font-size: 15px; line-height: 1.4; }
         .item-info p { margin: 0; font-size: 13px; color: #6b7280; font-family: monospace; } 
@@ -176,7 +169,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.4.1</span>
+            <span class="version-badge">v2.5.0</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -187,20 +180,15 @@
         </div>
     </div>
 
-    <div class="stats-bar">
-        <div class="mini-stat active" id="tabAll" onclick="setFilterMode('all')">
-            <span class="mini-stat-label">總品項</span>
-            <span class="mini-stat-val" id="totalItems">0</span>
+    <div class="status-panel">
+        <div class="status-block unfinished-block">
+            <span class="status-title">未完成</span>
+            <span class="status-number" id="unfinishedItems">0</span>
         </div>
-        <div class="mini-stat" id="tabUnfinished" onclick="setFilterMode('unfinished')">
-            <span class="mini-stat-label">未盤/差異</span>
-            <span class="mini-stat-val" style="color:var(--danger)" id="unfinishedItems">0</span>
+        <div class="status-block last-action-block" id="lastScannedBanner">
+            <span class="status-title">最後盤點</span>
+            <span class="status-text" id="lastScannedText">尚未盤點任何物品</span>
         </div>
-    </div>
-
-    <div id="lastScannedBanner" class="last-scanned-banner">
-        <span class="banner-label">最後盤點</span>
-        <span class="banner-text" id="lastScannedText">尚未盤點任何物品</span>
     </div>
 </div>
 
@@ -270,7 +258,6 @@
     let lastScannedCode = "";
     let lastScanTime = 0;
     let currentEditIndex = -1;
-    let filterMode = 'all';
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
@@ -287,7 +274,7 @@
                 const parsedData = JSON.parse(savedData);
                 if (parsedData && parsedData.length > 0) {
                     inventoryData = parsedData;
-                    setFilterMode('all');
+                    renderList();
                     showToast('🔄 已自動載入上次盤點進度');
                 }
             } catch (e) { console.error("讀取失敗", e); }
@@ -342,8 +329,8 @@
         const bannerText = document.getElementById('lastScannedText');
         bannerText.innerText = `【${item.code}】${item.name}`;
         const banner = document.getElementById('lastScannedBanner');
-        banner.style.backgroundColor = '#b2dfdb';
-        setTimeout(() => { banner.style.backgroundColor = '#e0f2f1'; }, 300);
+        banner.style.backgroundColor = '#e0f2f1'; // 閃爍效果
+        setTimeout(() => { banner.style.backgroundColor = 'transparent'; }, 300);
     }
 
     function handleFile(input) {
@@ -372,10 +359,11 @@
                         actQty: 0, counted: false 
                     };
                 }).filter(item => item.code !== '');
-                setFilterMode('all');
+                
                 document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
-                document.getElementById('lastScannedBanner').style.backgroundColor = '#e0f2f1';
                 saveToLocalStorage();
+                renderList();
+                
                 alert(`✅ 已載入 ${inventoryData.length} 筆資料`);
             } catch(err) { alert("❌ 讀取失敗"); }
         };
@@ -387,35 +375,40 @@
         container.innerHTML = '';
         if (inventoryData.length === 0) {
              container.innerHTML = `<div style="text-align:center; color:#999; padding: 40px 20px;">請匯入 Excel 檔案，或將自動讀取上次進度。</div>`;
+             updateStats();
              return;
         }
+        
         let filtered = inventoryData.filter(item => 
             item.code.toLowerCase().includes(filterText.toLowerCase()) || 
             item.name.toLowerCase().includes(filterText.toLowerCase())
         );
-        if (filterMode === 'unfinished') {
-            filtered = filtered.filter(item => !(item.counted && item.actQty === item.sysQty));
-        }
+        
+        // 👇 核心邏輯：強制過濾掉「已盤點且數量完全相符」的項目
+        filtered = filtered.filter(item => !(item.counted && item.actQty === item.sysQty));
+        
         if (filtered.length === 0) {
             if (filterText.trim() !== '') {
                 container.innerHTML = `<div style="text-align:center; color:#999; padding: 20px;">🔍 無符合項目</div>`;
-            } else if (filterMode === 'unfinished') {
-                container.innerHTML = `<div style="text-align:center; color:var(--success); padding: 40px 20px; font-weight:bold; font-size:18px;">🎉 恭喜！已盤點完全部項目！</div>`;
             } else {
-                container.innerHTML = `<div style="text-align:center; color:#999; padding: 20px;">無符合項目</div>`;
+                container.innerHTML = `<div style="text-align:center; color:var(--success); padding: 40px 20px; font-weight:bold; font-size:18px;">🎉 恭喜！已盤點完全部項目！</div>`;
             }
+            updateStats();
             return;
         }
+        
         filtered.forEach((item) => {
             const realIndex = inventoryData.indexOf(item);
             let statusClass = 'todo';
             const remaining = item.sysQty - item.actQty;
             let remColor = 'var(--danger)';
+            
+            // 這裡保留 error(少盤) 和 over(多盤) 的樣式
             if (item.counted) {
-                if (remaining === 0) { statusClass = 'done'; remColor = 'var(--success)'; }
-                else if (remaining < 0) { statusClass = 'over'; remColor = 'var(--blue)'; }
+                if (remaining < 0) { statusClass = 'over'; remColor = 'var(--blue)'; }
                 else { statusClass = 'error'; }
             }
+            
             const div = document.createElement('div');
             div.className = `item-card ${statusClass}`;
             div.onclick = () => openEditModal(realIndex);
@@ -424,21 +417,13 @@
                 <div class="item-count"><span class="diff-badge" style="color:${remColor}">${remaining}</span><span class="sub-count">已 ${item.actQty} / 應 ${item.sysQty}</span></div>`;
             container.appendChild(div);
         });
+        
         updateStats();
     }
 
     function updateStats() {
-        const total = inventoryData.length;
         const unfinished = inventoryData.filter(item => !(item.counted && item.actQty === item.sysQty)).length;
-        document.getElementById('totalItems').innerText = total;
         document.getElementById('unfinishedItems').innerText = unfinished;
-    }
-
-    function setFilterMode(mode) {
-        filterMode = mode;
-        document.getElementById('tabAll').className = mode === 'all' ? 'mini-stat active' : 'mini-stat';
-        document.getElementById('tabUnfinished').className = mode === 'unfinished' ? 'mini-stat active' : 'mini-stat';
-        renderList(document.getElementById('mainSearchInput').value);
     }
 
     function openEditModal(index) {
@@ -524,12 +509,34 @@
             iconCamera.style.display = 'none';
             iconStop.style.display = 'block';
             
+            try { if(html5QrCode) { html5QrCode.clear(); } } catch(e){}
             html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 120 } };
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 120 }, experimentalFeatures: { useBarCodeDetectorIfSupported: true } };
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
-            isScanning = true;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            try {
+                await html5QrCode.start({ facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }, config, onScanSuccess);
+                isScanning = true;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) {
+                console.log("高畫質失敗，切換基本模式...", err);
+                try {
+                    try { html5QrCode.clear(); } catch(e){}
+                    html5QrCode = new Html5Qrcode("reader");
+                    await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+                    isScanning = true;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } catch (err2) {
+                    alert("相機啟動失敗，請確認權限或重新整理網頁");
+                    section.classList.remove('show');
+                    readerDiv.style.display = 'none';
+                    btn.classList.remove('active');
+                    iconCamera.style.display = 'block';
+                    iconStop.style.display = 'none';
+                    isScanning = false;
+                }
+            }
         }
     }
 
@@ -546,7 +553,6 @@
             triggerFlash('success');
             showToast(`✅ 掃描成功`);
             updateLastActionBanner(item);
-            updateStats();
             renderList(document.getElementById('mainSearchInput').value);
             saveToLocalStorage();
         } else {
@@ -570,8 +576,7 @@
             inventoryData = []; 
             localStorage.removeItem('inventoryData_v2');
             document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
-            document.getElementById('lastScannedBanner').style.backgroundColor = '#e0f2f1';
-            renderList(); updateStats(); 
+            renderList(); 
         } 
     }
 </script>
