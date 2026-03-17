@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.5.1</title>
+    <title>盤點小工具 v2.5.2</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -114,7 +114,12 @@
         .btn-fab-scan:active { transform: scale(0.95); }
         .btn-fab-scan svg { display: block; } 
 
-        .item-list-container { padding-top: 10px; } 
+        /* 👇 修改：加入過渡效果，使推擠畫面時更平滑 */
+        .item-list-container { padding-top: 10px; transition: padding-top 0.2s ease-out; } 
+        
+        /* 👇 新增：當進入搜尋狀態時，列表往下推擠 70px，讓出空間給搜尋框 */
+        body.is-searching .item-list-container { padding-top: 70px; }
+
         .item-list { padding: 0 15px; }
         .item-card { background: var(--card); padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .item-card.error { border-left-color: var(--danger); background-color: #fef2f2; }
@@ -164,7 +169,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.5.1</span>
+            <span class="version-badge">v2.5.2</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -283,10 +288,14 @@
         if(searchInput && searchWrapper) {
             searchInput.addEventListener('focus', () => {
                 searchWrapper.classList.add('search-focused');
+                // 👇 修改：加入推擠 class，讓出空間給搜尋框
+                document.body.classList.add('is-searching');
                 setTimeout(() => { window.scrollTo(0, 0); }, 300);
             });
             searchInput.addEventListener('blur', () => {
                 searchWrapper.classList.remove('search-focused');
+                // 👇 修改：移除推擠 class，恢復原狀
+                document.body.classList.remove('is-searching');
             });
         }
         loadFromLocalStorage();
@@ -322,7 +331,6 @@
 
     function updateLastActionBanner(item) {
         const bannerText = document.getElementById('lastScannedText');
-        // 變更格式：移除框號，加入 span 設定綠色與半形空格
         bannerText.innerHTML = `<span style="color: var(--success);">${item.code}</span> ${item.name}`;
         
         const banner = document.getElementById('lastScannedBanner');
