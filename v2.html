@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.4.0</title>
+    <title>盤點小工具 v2.4.1</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -20,14 +20,19 @@
     <style>
         :root { --primary: #0ABAB5; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --blue: #3b82f6; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
         
-        html, body { height: 100%; }
+        /* 👇 修正：移除 html, body { height: 100%; } 避免干擾 iOS 視窗計算 */
 
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: var(--bg); margin: 0; padding: 0; color: var(--text); 
             padding-top: calc(170px + env(safe-area-inset-top)); 
-            padding-bottom: 110px; 
-            min-height: 100vh; box-sizing: border-box;
+            
+            /* 👇 修正：底部留白與最小高度導入現代寫法 */
+            padding-bottom: calc(110px + env(safe-area-inset-bottom)); 
+            min-height: 100vh;
+            min-height: 100dvh; /* 動態視窗高度，完美解決網址列縮放位移 */
+            
+            box-sizing: border-box;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
         }
         
@@ -88,8 +93,11 @@
         #reader { width: 100%; height: 270px; background: black; border-radius: 12px; overflow: hidden; position: relative; }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
+        /* 👇 修正：底部元件加入 safe-area-inset-bottom 確保實體邊界錨定 */
         .bottom-search-wrapper {
-            position: fixed !important; bottom: 36px !important; left: 96px !important; right: 20px !important; height: 56px;             
+            position: fixed !important; 
+            bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
+            left: 96px !important; right: 20px !important; height: 56px;             
             display: flex; align-items: center; z-index: 99; transform: translateZ(0); 
         }
         
@@ -106,7 +114,9 @@
         .bottom-search-input:focus { outline: 2px solid var(--primary); }
 
         .btn-fab-scan {
-            position: fixed !important; bottom: 36px !important; left: 30px !important;      
+            position: fixed !important; 
+            bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
+            left: 30px !important;      
             width: 56px; height: 56px; border-radius: 50%; background: var(--text); color: white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: none; display: flex; align-items: center; 
             justify-content: center; z-index: 9999; transform: translateZ(0); padding: 0; 
@@ -166,7 +176,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.4.0</span>
+            <span class="version-badge">v2.4.1</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -265,16 +275,11 @@
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
 
-    // 👇 1. 新增：寫入 localStorage 功能
     function saveToLocalStorage() {
-        try {
-            localStorage.setItem('inventoryData_v2', JSON.stringify(inventoryData));
-        } catch (e) {
-            console.error("儲存失敗", e);
-        }
+        try { localStorage.setItem('inventoryData_v2', JSON.stringify(inventoryData)); } 
+        catch (e) { console.error("儲存失敗", e); }
     }
 
-    // 👇 2. 新增：讀取 localStorage 功能
     function loadFromLocalStorage() {
         const savedData = localStorage.getItem('inventoryData_v2');
         if (savedData) {
@@ -285,9 +290,7 @@
                     setFilterMode('all');
                     showToast('🔄 已自動載入上次盤點進度');
                 }
-            } catch (e) {
-                console.error("讀取失敗", e);
-            }
+            } catch (e) { console.error("讀取失敗", e); }
         }
     }
 
@@ -304,8 +307,6 @@
                 searchWrapper.classList.remove('search-focused');
             });
         }
-        
-        // 👇 3. 新增：網頁載入時觸發自動讀取
         loadFromLocalStorage();
     });
 
@@ -374,10 +375,7 @@
                 setFilterMode('all');
                 document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
                 document.getElementById('lastScannedBanner').style.backgroundColor = '#e0f2f1';
-                
-                // 👇 4. 新增：匯入成功後儲存
                 saveToLocalStorage();
-                
                 alert(`✅ 已載入 ${inventoryData.length} 筆資料`);
             } catch(err) { alert("❌ 讀取失敗"); }
         };
@@ -493,8 +491,6 @@
         closeModal();
         document.getElementById('mainSearchInput').value = '';
         renderList(''); 
-        
-        // 👇 5. 新增：修改數量後自動儲存
         saveToLocalStorage();
     }
 
@@ -533,7 +529,6 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
             isScanning = true;
-            
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
@@ -553,8 +548,6 @@
             updateLastActionBanner(item);
             updateStats();
             renderList(document.getElementById('mainSearchInput').value);
-            
-            // 👇 6. 新增：掃描成功後自動儲存
             saveToLocalStorage();
         } else {
             playBeep('error');
@@ -575,14 +568,10 @@
     function resetAll() { 
         if(confirm('確定清空所有資料？')) { 
             inventoryData = []; 
-            
-            // 👇 7. 新增：重置時清除本地暫存
             localStorage.removeItem('inventoryData_v2');
             document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
             document.getElementById('lastScannedBanner').style.backgroundColor = '#e0f2f1';
-            
-            renderList(); 
-            updateStats(); 
+            renderList(); updateStats(); 
         } 
     }
 </script>
