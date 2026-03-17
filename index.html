@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v3.0.3</title>
+    <title>盤點小工具 v3.1.0</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -31,7 +31,6 @@
         
         input { user-select: text; }
 
-        /* 絕對穩定定位的頂部區塊 */
         .fixed-group {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
             background: var(--bg); box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
@@ -77,13 +76,12 @@
             font-size: 22px; font-weight: 800; color: var(--danger); line-height: 1;
         }
         .status-text {
-            font-size: 14px; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4;
+            font-size: 14px; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; display: block; width: 100%;
         }
 
-        /* 👇 新架構：完全收納在固定區塊內的真實搜尋面板 */
         .top-search-panel {
             background: #e5e7eb; padding: 10px 15px; border-bottom: 1px solid #ccc;
-            display: none; /* 預設隱藏 */
+            display: none; 
         }
         .top-search-panel.show { display: flex; align-items: center; gap: 10px; }
         
@@ -106,7 +104,6 @@
             font-size: 15px; padding: 10px 5px; cursor: pointer; white-space: nowrap; margin: 0;
         }
 
-        /* 👇 新架構：置於右下角的假按鈕 (替身) */
         .bottom-search-proxy {
             position: fixed !important; bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
             left: 96px !important; right: 20px !important; height: 56px;             
@@ -138,7 +135,6 @@
         .btn-fab-scan svg { display: block; } 
 
         .item-list-container { padding-top: 10px; transition: padding-top 0.2s ease-out; } 
-        /* 當搜尋列展開時，列表自然往下推擠，讓出空間 */
         body.is-searching .item-list-container { padding-top: 75px; }
 
         .item-list { padding: 0 15px; }
@@ -186,11 +182,13 @@
 
 <div id="flashOverlay" class="flash-overlay"></div>
 
+<div id="toast" class="toast"></div>
+
 <div class="fixed-group">
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v3.0.3</span>
+            <span class="version-badge">v3.1.0</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -313,7 +311,6 @@
         }
     }
 
-    // 啟動搜尋模式
     function enterSearchMode(e) {
         if(e) e.stopPropagation();
         isSearchMode = true;
@@ -323,7 +320,6 @@
         document.getElementById('mainSearchInput').focus();
     }
 
-    // 退出搜尋模式
     function exitSearchMode() {
         if (!isSearchMode) return;
         isSearchMode = false;
@@ -345,7 +341,6 @@
         }
     }
 
-    // 清空搜尋內容
     function clearSearch(e) {
         e.stopPropagation();
         const mainInput = document.getElementById('mainSearchInput');
@@ -359,7 +354,6 @@
         const mainInput = document.getElementById('mainSearchInput');
         const clearBtn = document.getElementById('btnClearSearch');
         
-        // 綁定輸入事件來顯示/隱藏清除按鈕
         if(mainInput && clearBtn) {
             mainInput.addEventListener('input', (e) => {
                 clearBtn.style.display = e.target.value ? 'flex' : 'none';
@@ -367,7 +361,6 @@
             });
         }
         
-        // 全域監聽：點擊空白處關閉搜尋
         document.addEventListener('click', (e) => {
             if (!isSearchMode) return;
             
@@ -415,11 +408,15 @@
 
     function updateLastActionBanner(item) {
         const bannerText = document.getElementById('lastScannedText');
-        bannerText.innerHTML = `<span style="color: var(--success);">${item.code}</span> ${item.name}`;
+        if (bannerText) {
+            bannerText.innerHTML = `<span style="color: var(--success);">${item.code}</span> ${item.name}`;
+        }
         
         const banner = document.getElementById('lastScannedBanner');
-        banner.style.backgroundColor = '#e0f2f1'; 
-        setTimeout(() => { banner.style.backgroundColor = 'transparent'; }, 300);
+        if (banner) {
+            banner.style.backgroundColor = '#e0f2f1'; 
+            setTimeout(() => { banner.style.backgroundColor = 'transparent'; }, 300);
+        }
     }
 
     function handleFile(input) {
@@ -578,7 +575,7 @@
     }
 
     async function toggleScanner() {
-        exitSearchMode(); // 確保啟動相機時退出搜尋狀態
+        exitSearchMode(); 
         const btn = document.getElementById('fabScan');
         const iconCamera = document.getElementById('iconCamera');
         const iconStop = document.getElementById('iconStop');
@@ -633,12 +630,14 @@
 
     function onScanSuccess(decodedText, decodedResult) {
         const now = Date.now();
-        if (decodedText === lastScannedCode && now - lastScanTime < 1000) return;
-        lastScannedCode = decodedText;
+        // 強制濾除空白字元，確保精準比對
+        const cleanText = decodedText.trim();
+        
+        if (cleanText === lastScannedCode && now - lastScanTime < 1000) return;
+        lastScannedCode = cleanText;
         lastScanTime = now;
         
-        // 此處完全比照 v3.0.2 運作正常的邏輯
-        const item = inventoryData.find(i => i.code === decodedText);
+        const item = inventoryData.find(i => i.code === cleanText);
         if (item) {
             item.actQty++;
             item.counted = true;
@@ -657,6 +656,7 @@
 
     function showToast(message) {
         const toast = document.getElementById('toast');
+        if (!toast) return; // 雙重保險，防止報錯
         toast.innerText = message;
         toast.style.display = 'block';
         setTimeout(() => { toast.style.display = 'none'; }, 1500);
