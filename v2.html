@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.5.2</title>
+    <title>盤點小工具 v3.0.3</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -92,7 +92,7 @@
         }
         
         .bottom-search-wrapper.search-focused {
-            bottom: auto !important; top: calc(110px + env(safe-area-inset-top)) !important; 
+            bottom: auto !important; top: calc(128px + env(safe-area-inset-top)) !important; 
             left: 15px !important; right: 15px !important; z-index: 105 !important; 
         }
 
@@ -114,10 +114,7 @@
         .btn-fab-scan:active { transform: scale(0.95); }
         .btn-fab-scan svg { display: block; } 
 
-        /* 👇 修改：加入過渡效果，使推擠畫面時更平滑 */
         .item-list-container { padding-top: 10px; transition: padding-top 0.2s ease-out; } 
-        
-        /* 👇 新增：當進入搜尋狀態時，列表往下推擠 70px，讓出空間給搜尋框 */
         body.is-searching .item-list-container { padding-top: 70px; }
 
         .item-list { padding: 0 15px; }
@@ -169,7 +166,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.5.2</span>
+            <span class="version-badge">v3.0.3</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -199,7 +196,7 @@
 <div class="item-list-container">
     <div class="item-list" id="itemList">
         <div style="text-align:center; color:#999; padding: 40px 20px;">
-            請匯入 Excel 檔案，或將自動讀取上次進度。
+            📄匯入 Excel 檔案開始盤點
         </div>
     </div>
 </div>
@@ -258,6 +255,7 @@
     let lastScannedCode = "";
     let lastScanTime = 0;
     let currentEditIndex = -1;
+    let isSearchMode = false; // 控制搜尋模式狀態
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
@@ -281,23 +279,47 @@
         }
     }
 
+    // 退出搜尋模式邏輯
+    function exitSearchMode() {
+        if (!isSearchMode) return;
+        isSearchMode = false;
+        const searchWrapper = document.getElementById('bottomSearchWrapper');
+        const searchInput = document.getElementById('mainSearchInput');
+        
+        if (searchWrapper) searchWrapper.classList.remove('search-focused');
+        document.body.classList.remove('is-searching');
+        if (searchInput) searchInput.blur();
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         const searchInput = document.getElementById('mainSearchInput');
         const searchWrapper = document.getElementById('bottomSearchWrapper');
         
         if(searchInput && searchWrapper) {
             searchInput.addEventListener('focus', () => {
+                isSearchMode = true;
                 searchWrapper.classList.add('search-focused');
-                // 👇 修改：加入推擠 class，讓出空間給搜尋框
                 document.body.classList.add('is-searching');
                 setTimeout(() => { window.scrollTo(0, 0); }, 300);
             });
-            searchInput.addEventListener('blur', () => {
-                searchWrapper.classList.remove('search-focused');
-                // 👇 修改：移除推擠 class，恢復原狀
-                document.body.classList.remove('is-searching');
-            });
+            // 移除原本的 blur 監聽，改由全域 click 代理控制退出
         }
+        
+        // 全域點擊監聽：點擊非搜尋區域時收合搜尋列
+        document.addEventListener('click', (e) => {
+            if (!isSearchMode) return;
+            
+            const clickedSearch = e.target.closest('#bottomSearchWrapper');
+            const clickedCard = e.target.closest('.item-card');
+            const clickedFab = e.target.closest('#fabScan');
+            const clickedModal = e.target.closest('#editModal');
+            
+            // 只有點擊空白處、頂部列時才主動退出搜尋模式
+            if (!clickedSearch && !clickedCard && !clickedFab && !clickedModal) {
+                exitSearchMode();
+            }
+        });
+
         loadFromLocalStorage();
     });
 
@@ -379,7 +401,7 @@
         const container = document.getElementById('itemList');
         container.innerHTML = '';
         if (inventoryData.length === 0) {
-             container.innerHTML = `<div style="text-align:center; color:#999; padding: 40px 20px;">請匯入 Excel 檔案，或將自動讀取上次進度。</div>`;
+             container.innerHTML = `<div style="text-align:center; color:#999; padding: 40px 20px;">📄匯入 Excel 檔案開始盤點</div>`;
              updateStats();
              return;
         }
@@ -430,6 +452,7 @@
     }
 
     function openEditModal(index) {
+        exitSearchMode(); // 確保進入編輯視窗時，主動收合搜尋列
         if(isScanning && html5QrCode) html5QrCode.pause();
         currentEditIndex = index;
         const item = inventoryData[index];
@@ -491,6 +514,7 @@
     }
 
     async function toggleScanner() {
+        exitSearchMode(); // 確保啟動相機時退出搜尋狀態
         const btn = document.getElementById('fabScan');
         const iconCamera = document.getElementById('iconCamera');
         const iconStop = document.getElementById('iconStop');
@@ -575,6 +599,7 @@
     function filterList(val) { renderList(val); window.scrollTo(0, 0); }
     
     function resetAll() { 
+        exitSearchMode();
         if(confirm('確定清空所有資料？')) { 
             inventoryData = []; 
             localStorage.removeItem('inventoryData_v2');
