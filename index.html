@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v3.1.0</title>
+    <title>盤點小工具 v3.2.0</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -181,14 +181,13 @@
 <body>
 
 <div id="flashOverlay" class="flash-overlay"></div>
-
 <div id="toast" class="toast"></div>
 
 <div class="fixed-group">
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v3.1.0</span>
+            <span class="version-badge">v3.2.0</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -409,9 +408,13 @@
     function updateLastActionBanner(item) {
         const bannerText = document.getElementById('lastScannedText');
         if (bannerText) {
-            bannerText.innerHTML = `<span style="color: var(--success);">${item.code}</span> ${item.name}`;
+            bannerText.innerHTML = '';
+            const codeSpan = document.createElement('span');
+            codeSpan.style.color = 'var(--success)';
+            codeSpan.innerText = item.code;
+            bannerText.appendChild(codeSpan);
+            bannerText.appendChild(document.createTextNode(' ' + item.name));
         }
-        
         const banner = document.getElementById('lastScannedBanner');
         if (banner) {
             banner.style.backgroundColor = '#e0f2f1'; 
@@ -553,23 +556,46 @@
         saveQty(); 
     }
 
+    // 👇 修改：加入儲存後自動清空搜尋並重新喚起鍵盤的邏輯
     function saveQty() {
         if (currentEditIndex === -1) return;
         inventoryData[currentEditIndex].actQty = Number(document.getElementById('modalQty').value);
         inventoryData[currentEditIndex].counted = true;
         updateLastActionBanner(inventoryData[currentEditIndex]);
         
-        closeModal();
-        renderList(document.getElementById('mainSearchInput').value); 
         saveToLocalStorage();
+        
+        const mainInput = document.getElementById('mainSearchInput');
+        if (isSearchMode) {
+            // 搜尋模式下：清空搜尋欄、隱藏叉叉按鈕，並重新渲染完整列表
+            mainInput.value = '';
+            const clearBtn = document.getElementById('btnClearSearch');
+            if (clearBtn) clearBtn.style.display = 'none';
+            renderList('');
+        } else {
+            // 非搜尋模式：保持當下過濾狀態
+            renderList(mainInput.value); 
+        }
+
+        // 呼叫 closeModal 關閉卡片，其中已包含鍵盤重新喚起的邏輯
+        closeModal();
     }
 
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
         document.getElementById('fabScan').style.display = 'flex';
-        if(!isSearchMode) {
+        
+        if (!isSearchMode) {
             document.getElementById('bottomSearchProxy').style.display = 'flex';
+        } else {
+            // 👇 新增：在搜尋模式下關閉卡片（或儲存後），主動跳回搜尋框強制喚起鍵盤
+            const mainInput = document.getElementById('mainSearchInput');
+            if (mainInput) {
+                mainInput.focus();
+                setTimeout(() => { window.scrollTo(0, 0); }, 50); // 確保畫面維持在最頂端
+            }
         }
+        
         currentEditIndex = -1;
         if(isScanning && html5QrCode) html5QrCode.resume();
     }
@@ -630,7 +656,6 @@
 
     function onScanSuccess(decodedText, decodedResult) {
         const now = Date.now();
-        // 強制濾除空白字元，確保精準比對
         const cleanText = decodedText.trim();
         
         if (cleanText === lastScannedCode && now - lastScanTime < 1000) return;
@@ -656,7 +681,7 @@
 
     function showToast(message) {
         const toast = document.getElementById('toast');
-        if (!toast) return; // 雙重保險，防止報錯
+        if (!toast) return; 
         toast.innerText = message;
         toast.style.display = 'block';
         setTimeout(() => { toast.style.display = 'none'; }, 1500);
