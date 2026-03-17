@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v2.3.4</title>
+    <title>盤點小工具 v2.4.0</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -25,36 +25,25 @@
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: var(--bg); margin: 0; padding: 0; color: var(--text); 
-            
-            /* 嚴格保持原本的留白，保證列表永遠不會被頂部橫幅擋住 */
-            padding-top: calc(180px + env(safe-area-inset-top)); 
+            padding-top: calc(170px + env(safe-area-inset-top)); 
             padding-bottom: 110px; 
-            
-            min-height: 100vh;
-            box-sizing: border-box;
+            min-height: 100vh; box-sizing: border-box;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
         }
         
         input { user-select: text; }
 
-        /* 絕對穩定定位的頂部區塊 */
         .fixed-group {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
-            background: var(--bg);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+            background: var(--bg); box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
         }
 
-        /* 1. Header */
         .header { 
-            background: var(--primary); color: white; 
-            padding: 15px;
+            background: var(--primary); color: white; padding: 15px;
             padding-top: calc(15px + env(safe-area-inset-top));
             display: flex; justify-content: space-between; align-items: center; 
         }
-        .header h1 { 
-            margin: 0; font-size: 18px; font-weight: 700; 
-            display: flex; align-items: center; 
-        }
+        .header h1 { margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; }
         
         .version-badge {
             font-size: 10px; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 12px;
@@ -70,10 +59,8 @@
         .btn-file-wrapper { position: relative; overflow: hidden; }
         .btn-file-wrapper input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
-        /* 2. Stats */
         .stats-bar {
-            background: var(--bg); padding: 8px 15px; 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            background: var(--bg); padding: 8px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
         }
         .mini-stat {
             background: white; padding: 8px 10px; border-radius: 6px;
@@ -84,7 +71,6 @@
         .mini-stat-label { font-size: 13px; color: #555; font-weight: 700; } 
         .mini-stat-val { font-size: 20px; font-weight: 800; color: #333; } 
 
-        /* 3. 上一個盤點物品橫幅 */
         .last-scanned-banner {
             background: #e0f2f1; padding: 8px 15px; font-size: 13px; color: #00796b; 
             border-top: 1px solid #b2dfdb; display: flex; align-items: center; gap: 8px;
@@ -94,34 +80,22 @@
             background: var(--primary); color: white; padding: 2px 6px; 
             border-radius: 4px; font-size: 11px; font-weight: bold; white-space: nowrap;
         }
-        .banner-text {
-            font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
-        }
+        .banner-text { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
 
-        /* 掃描區塊 */
         .scan-section { padding: 0 10px; margin-bottom: 10px; display: none; }
         .scan-section.show { display: block; }
         
-        #reader { 
-            width: 100%; height: 270px; background: black; border-radius: 12px; 
-            overflow: hidden; position: relative; 
-        }
+        #reader { width: 100%; height: 270px; background: black; border-radius: 12px; overflow: hidden; position: relative; }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
 
-        /* 底部懸浮搜尋區塊 */
         .bottom-search-wrapper {
-            position: fixed !important; bottom: 36px !important;  
-            left: 96px !important; right: 20px !important; height: 56px;             
+            position: fixed !important; bottom: 36px !important; left: 96px !important; right: 20px !important; height: 56px;             
             display: flex; align-items: center; z-index: 99; transform: translateZ(0); 
         }
         
-        /* 👇 核心新增：當搜尋框點擊時，瞬間跳到上方，且置於最上層 */
         .bottom-search-wrapper.search-focused {
-            bottom: auto !important;
-            top: calc(145px + env(safe-area-inset-top)) !important; /* 精準算好，貼在橫幅下方 */
-            left: 15px !important;
-            right: 15px !important;
-            z-index: 105 !important; 
+            bottom: auto !important; top: calc(145px + env(safe-area-inset-top)) !important; 
+            left: 15px !important; right: 15px !important; z-index: 105 !important; 
         }
 
         .bottom-search-input {
@@ -131,7 +105,6 @@
         }
         .bottom-search-input:focus { outline: 2px solid var(--primary); }
 
-        /* 懸浮按鈕 */
         .btn-fab-scan {
             position: fixed !important; bottom: 36px !important; left: 30px !important;      
             width: 56px; height: 56px; border-radius: 50%; background: var(--text); color: white;
@@ -142,7 +115,6 @@
         .btn-fab-scan:active { transform: scale(0.95); }
         .btn-fab-scan svg { display: block; } 
 
-        /* List Styling */
         .item-list-container { padding-top: 10px; } 
         .item-list { padding: 0 15px; }
         .item-card { background: var(--card); padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
@@ -156,7 +128,6 @@
         .diff-badge { font-size: 20px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
         .sub-count { font-size: 12px; color: #777; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
 
-        /* Modal & Toast */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: flex-end; }
         .modal { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; box-sizing: border-box; padding-bottom: 40px; }
         .modal-header { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
@@ -195,7 +166,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v2.3.4</span>
+            <span class="version-badge">v2.4.0</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -230,7 +201,7 @@
 <div class="item-list-container">
     <div class="item-list" id="itemList">
         <div style="text-align:center; color:#999; padding: 40px 20px;">
-            請點擊右上方「📄匯入」載入 Excel
+            請匯入 Excel 檔案，或將自動讀取上次進度。
         </div>
     </div>
 </div>
@@ -294,27 +265,48 @@
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
 
-    // 👇 核心修復：方案一「瞬間置頂防禦機制」
+    // 👇 1. 新增：寫入 localStorage 功能
+    function saveToLocalStorage() {
+        try {
+            localStorage.setItem('inventoryData_v2', JSON.stringify(inventoryData));
+        } catch (e) {
+            console.error("儲存失敗", e);
+        }
+    }
+
+    // 👇 2. 新增：讀取 localStorage 功能
+    function loadFromLocalStorage() {
+        const savedData = localStorage.getItem('inventoryData_v2');
+        if (savedData) {
+            try {
+                const parsedData = JSON.parse(savedData);
+                if (parsedData && parsedData.length > 0) {
+                    inventoryData = parsedData;
+                    setFilterMode('all');
+                    showToast('🔄 已自動載入上次盤點進度');
+                }
+            } catch (e) {
+                console.error("讀取失敗", e);
+            }
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         const searchInput = document.getElementById('mainSearchInput');
         const searchWrapper = document.getElementById('bottomSearchWrapper');
         
         if(searchInput && searchWrapper) {
             searchInput.addEventListener('focus', () => {
-                // 1. 加上 class，靠 CSS 將搜尋框瞬間移到上方橫幅下面
                 searchWrapper.classList.add('search-focused');
-                
-                // 2. 延遲 300ms 讓鍵盤升起後，將背景鎖在最頂端，抵銷 Safari 的位移
                 setTimeout(() => { window.scrollTo(0, 0); }, 300);
             });
-            
             searchInput.addEventListener('blur', () => {
-                // 1. 關閉鍵盤時，瞬間把搜尋框移回右下角
                 searchWrapper.classList.remove('search-focused');
-                
-                // 嚴格規定：這裡絕對不加滾動代碼，確保點擊列表卡片的操作 100% 成功
             });
         }
+        
+        // 👇 3. 新增：網頁載入時觸發自動讀取
+        loadFromLocalStorage();
     });
 
     function getValue(row, possibleNames) {
@@ -382,6 +374,10 @@
                 setFilterMode('all');
                 document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
                 document.getElementById('lastScannedBanner').style.backgroundColor = '#e0f2f1';
+                
+                // 👇 4. 新增：匯入成功後儲存
+                saveToLocalStorage();
+                
                 alert(`✅ 已載入 ${inventoryData.length} 筆資料`);
             } catch(err) { alert("❌ 讀取失敗"); }
         };
@@ -392,7 +388,7 @@
         const container = document.getElementById('itemList');
         container.innerHTML = '';
         if (inventoryData.length === 0) {
-             container.innerHTML = `<div style="text-align:center; color:#999; padding: 40px 20px;">請點擊右上方「📄匯入」載入 Excel</div>`;
+             container.innerHTML = `<div style="text-align:center; color:#999; padding: 40px 20px;">請匯入 Excel 檔案，或將自動讀取上次進度。</div>`;
              return;
         }
         let filtered = inventoryData.filter(item => 
@@ -457,7 +453,6 @@
         document.getElementById('btnQuickQty').innerText = item.sysQty;
         document.getElementById('modalQty').value = item.counted ? item.actQty : 0;
         syncInputToStats(); 
-        
         document.getElementById('fabScan').style.display = 'none';
         document.getElementById('bottomSearchWrapper').style.display = 'none';
         document.getElementById('editModal').style.display = 'flex';
@@ -498,6 +493,9 @@
         closeModal();
         document.getElementById('mainSearchInput').value = '';
         renderList(''); 
+        
+        // 👇 5. 新增：修改數量後自動儲存
+        saveToLocalStorage();
     }
 
     function closeModal() {
@@ -508,12 +506,10 @@
         if(isScanning && html5QrCode) html5QrCode.resume();
     }
 
-    // 嚴格沿用無錯誤版本的相機啟動原始碼，絕不隨便加上可能報錯的進階參數
     async function toggleScanner() {
         const btn = document.getElementById('fabScan');
         const iconCamera = document.getElementById('iconCamera');
         const iconStop = document.getElementById('iconStop');
-        
         const readerDiv = document.getElementById('reader');
         const section = document.getElementById('scanSection');
         
@@ -522,16 +518,13 @@
             section.classList.remove('show');
             readerDiv.style.display = 'none';
             btn.classList.remove('active');
-            
             iconCamera.style.display = 'block';
             iconStop.style.display = 'none';
-            
             isScanning = false;
         } else {
             section.classList.add('show');
             readerDiv.style.display = 'block';
             btn.classList.add('active');
-            
             iconCamera.style.display = 'none';
             iconStop.style.display = 'block';
             
@@ -560,6 +553,9 @@
             updateLastActionBanner(item);
             updateStats();
             renderList(document.getElementById('mainSearchInput').value);
+            
+            // 👇 6. 新增：掃描成功後自動儲存
+            saveToLocalStorage();
         } else {
             playBeep('error');
             triggerFlash('error');
@@ -574,13 +570,21 @@
         setTimeout(() => { toast.style.display = 'none'; }, 1500);
     }
     
-    // 👇 確保打字過濾列表時，螢幕也穩穩貼齊上方，方便邊看邊點
-    function filterList(val) { 
-        renderList(val); 
-        window.scrollTo(0, 0); 
-    }
+    function filterList(val) { renderList(val); window.scrollTo(0, 0); }
     
-    function resetAll() { if(confirm('確定清空所有資料？')) { inventoryData = []; renderList(); updateStats(); } }
+    function resetAll() { 
+        if(confirm('確定清空所有資料？')) { 
+            inventoryData = []; 
+            
+            // 👇 7. 新增：重置時清除本地暫存
+            localStorage.removeItem('inventoryData_v2');
+            document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
+            document.getElementById('lastScannedBanner').style.backgroundColor = '#e0f2f1';
+            
+            renderList(); 
+            updateStats(); 
+        } 
+    }
 </script>
 </body>
 </html>
