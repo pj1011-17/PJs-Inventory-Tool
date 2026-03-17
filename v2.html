@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v3.0.3</title>
+    <title>盤點小工具 v3.0.5</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -27,6 +27,7 @@
             padding-bottom: calc(110px + env(safe-area-inset-bottom)); 
             min-height: 100vh; min-height: 100dvh; 
             box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; 
+            transition: padding-top 0.2s ease-out; /* 讓頂部展開時有平滑動畫 */
         }
         
         input { user-select: text; }
@@ -79,29 +80,56 @@
             font-size: 14px; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4;
         }
 
+        /* 👇 新架構：收納在頂部的真實搜尋面板 */
+        .top-search-panel {
+            background: #f3f4f6;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            display: none; /* 預設隱藏 */
+        }
+        .top-search-panel.show { display: flex; align-items: center; gap: 8px; }
+        
+        .top-search-input-wrapper { position: relative; flex: 1; }
+        .top-search-input {
+            width: 100%; padding: 10px 40px 10px 15px; border: 1px solid #ccc;
+            border-radius: 8px; font-size: 16px; box-sizing: border-box; -webkit-appearance: none;
+            background: white;
+        }
+        .top-search-input:focus { outline: 2px solid var(--primary); }
+        
+        .btn-clear-search {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            background: #e5e7eb; border-radius: 50%; width: 24px; height: 24px;
+            display: flex; justify-content: center; align-items: center; color: #666;
+            font-size: 12px; border: none; cursor: pointer; display: none;
+        }
+        .btn-close-search {
+            background: transparent; border: none; color: var(--primary); font-weight: bold;
+            font-size: 15px; padding: 10px 5px; cursor: pointer; white-space: nowrap;
+        }
+
+        /* 👇 新架構：右下角的替身按鈕 (看起來像輸入框，實際上是按鈕) */
+        .bottom-search-proxy {
+            position: fixed !important; bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
+            left: 96px !important; right: 20px !important; height: 56px;             
+            display: flex; align-items: center; z-index: 99; transform: translateZ(0); 
+            cursor: pointer; /* 讓它表現得像按鈕 */
+        }
+        .bottom-search-proxy-inner {
+            width: 100%; height: 48px; padding: 0 20px; border-radius: 24px;      
+            font-size: 15px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            display: flex; align-items: center; color: #999;
+        }
+        .bottom-search-proxy-inner.has-filter { color: var(--primary); font-weight: bold; border: 1px solid var(--primary); }
+
+        /* 當搜尋展開時，清出空間給頂部面板 */
+        body.is-searching { padding-top: calc(185px + env(safe-area-inset-top)); }
+
         .scan-section { padding: 0 10px; margin-bottom: 10px; display: none; }
         .scan-section.show { display: block; }
         
         #reader { width: 100%; height: 270px; background: black; border-radius: 12px; overflow: hidden; position: relative; }
         #reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 12px; }
-
-        .bottom-search-wrapper {
-            position: fixed !important; bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
-            left: 96px !important; right: 20px !important; height: 56px;             
-            display: flex; align-items: center; z-index: 99; transform: translateZ(0); 
-        }
-        
-        .bottom-search-wrapper.search-focused {
-            bottom: auto !important; top: calc(128px + env(safe-area-inset-top)) !important; 
-            left: 15px !important; right: 15px !important; z-index: 105 !important; 
-        }
-
-        .bottom-search-input {
-            width: 100%; height: 48px; padding: 0 20px; border: none; border-radius: 24px;      
-            font-size: 15px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-            box-sizing: border-box; -webkit-appearance: none;
-        }
-        .bottom-search-input:focus { outline: 2px solid var(--primary); }
 
         .btn-fab-scan {
             position: fixed !important; bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
@@ -114,9 +142,7 @@
         .btn-fab-scan:active { transform: scale(0.95); }
         .btn-fab-scan svg { display: block; } 
 
-        .item-list-container { padding-top: 10px; transition: padding-top 0.2s ease-out; } 
-        body.is-searching .item-list-container { padding-top: 70px; }
-
+        .item-list-container { padding-top: 10px; } 
         .item-list { padding: 0 15px; }
         .item-card { background: var(--card); padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .item-card.error { border-left-color: var(--danger); background-color: #fef2f2; }
@@ -166,7 +192,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v3.0.3</span>
+            <span class="version-badge">v3.0.5</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -187,6 +213,16 @@
             <span class="status-text" id="lastScannedText">尚未盤點任何物品</span>
         </div>
     </div>
+    
+    <div class="top-search-panel" id="topSearchPanel">
+        <div class="top-search-input-wrapper">
+            <input type="text" id="mainSearchInput" class="top-search-input" 
+                   inputmode="numeric" pattern="[0-9]*" enterkeyhint="search" autocomplete="off"
+                   placeholder="🔍 輸入代號搜尋..." oninput="filterList(this.value)">
+            <button class="btn-clear-search" id="btnClearSearch">✖</button>
+        </div>
+        <button class="btn-close-search" onclick="exitSearchMode()">收起</button>
+    </div>
 </div>
 
 <div class="scan-section" id="scanSection">
@@ -201,10 +237,10 @@
     </div>
 </div>
 
-<div class="bottom-search-wrapper" id="bottomSearchWrapper">
-    <input type="text" id="mainSearchInput" class="bottom-search-input" 
-           inputmode="numeric" pattern="[0-9]*" enterkeyhint="search" autocomplete="off"
-           placeholder="🔍 點此輸入代號..." oninput="filterList(this.value)">
+<div class="bottom-search-proxy" id="bottomSearchProxy">
+    <div class="bottom-search-proxy-inner" id="proxyText">
+        🔍 點此輸入代號...
+    </div>
 </div>
 
 <button type="button" class="btn-fab-scan" id="fabScan" onclick="toggleScanner()">
@@ -255,7 +291,7 @@
     let lastScannedCode = "";
     let lastScanTime = 0;
     let currentEditIndex = -1;
-    let isSearchMode = false; // 控制搜尋模式狀態
+    let isSearchMode = false; 
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
@@ -279,43 +315,73 @@
         }
     }
 
-    // 退出搜尋模式邏輯
+    // 👇 核心邏輯：控制退出搜尋模式
     function exitSearchMode() {
         if (!isSearchMode) return;
         isSearchMode = false;
-        const searchWrapper = document.getElementById('bottomSearchWrapper');
-        const searchInput = document.getElementById('mainSearchInput');
         
-        if (searchWrapper) searchWrapper.classList.remove('search-focused');
+        document.getElementById('topSearchPanel').classList.remove('show');
+        document.getElementById('bottomSearchProxy').style.display = 'flex';
         document.body.classList.remove('is-searching');
-        if (searchInput) searchInput.blur();
+        
+        const mainInput = document.getElementById('mainSearchInput');
+        mainInput.blur();
+        
+        // 更新替身按鈕的文字狀態，提示目前是否有過濾條件
+        const proxyText = document.getElementById('proxyText');
+        if (mainInput.value.trim() !== '') {
+            proxyText.innerText = `🔍 已過濾: ${mainInput.value}`;
+            proxyText.classList.add('has-filter');
+        } else {
+            proxyText.innerText = '🔍 點此輸入代號...';
+            proxyText.classList.remove('has-filter');
+        }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        const searchInput = document.getElementById('mainSearchInput');
-        const searchWrapper = document.getElementById('bottomSearchWrapper');
+        const topSearchPanel = document.getElementById('topSearchPanel');
+        const mainInput = document.getElementById('mainSearchInput');
+        const proxyBtn = document.getElementById('bottomSearchProxy');
+        const clearBtn = document.getElementById('btnClearSearch');
         
-        if(searchInput && searchWrapper) {
-            searchInput.addEventListener('focus', () => {
+        // 點擊替身按鈕 -> 展開真實搜尋面板
+        if(proxyBtn) {
+            proxyBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // 阻止事件冒泡，避免觸發下方的 document 點擊
                 isSearchMode = true;
-                searchWrapper.classList.add('search-focused');
+                proxyBtn.style.display = 'none';
+                topSearchPanel.classList.add('show');
                 document.body.classList.add('is-searching');
-                setTimeout(() => { window.scrollTo(0, 0); }, 300);
+                mainInput.focus();
             });
-            // 移除原本的 blur 監聽，改由全域 click 代理控制退出
         }
         
-        // 全域點擊監聽：點擊非搜尋區域時收合搜尋列
+        // 輸入框文字變化時控制清空按鈕顯示
+        if(mainInput && clearBtn) {
+            mainInput.addEventListener('input', () => {
+                clearBtn.style.display = mainInput.value ? 'flex' : 'none';
+            });
+            
+            clearBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mainInput.value = '';
+                filterList('');
+                mainInput.focus();
+                clearBtn.style.display = 'none';
+            });
+        }
+        
+        // 全域點擊監聽：點擊非互動區域時收合搜尋列
         document.addEventListener('click', (e) => {
             if (!isSearchMode) return;
             
-            const clickedSearch = e.target.closest('#bottomSearchWrapper');
+            const clickedTopSearch = e.target.closest('#topSearchPanel');
             const clickedCard = e.target.closest('.item-card');
             const clickedFab = e.target.closest('#fabScan');
             const clickedModal = e.target.closest('#editModal');
             
-            // 只有點擊空白處、頂部列時才主動退出搜尋模式
-            if (!clickedSearch && !clickedCard && !clickedFab && !clickedModal) {
+            // 點擊空白處才收起（點擊商品卡片時不會收起，方便連續修改）
+            if (!clickedTopSearch && !clickedCard && !clickedFab && !clickedModal) {
                 exitSearchMode();
             }
         });
@@ -452,7 +518,7 @@
     }
 
     function openEditModal(index) {
-        exitSearchMode(); // 確保進入編輯視窗時，主動收合搜尋列
+        // 注意：這裡不呼叫 exitSearchMode()，讓使用者可以在修改後無縫繼續搜尋
         if(isScanning && html5QrCode) html5QrCode.pause();
         currentEditIndex = index;
         const item = inventoryData[index];
@@ -463,7 +529,7 @@
         document.getElementById('modalQty').value = item.counted ? item.actQty : 0;
         syncInputToStats(); 
         document.getElementById('fabScan').style.display = 'none';
-        document.getElementById('bottomSearchWrapper').style.display = 'none';
+        document.getElementById('bottomSearchProxy').style.display = 'none';
         document.getElementById('editModal').style.display = 'flex';
     }
 
@@ -500,21 +566,25 @@
         updateLastActionBanner(inventoryData[currentEditIndex]);
         if (document.activeElement) document.activeElement.blur();
         closeModal();
-        document.getElementById('mainSearchInput').value = '';
-        renderList(''); 
+        
+        // 更新列表，但不清空搜尋框，實現連續搜尋體驗
+        renderList(document.getElementById('mainSearchInput').value); 
         saveToLocalStorage();
     }
 
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
         document.getElementById('fabScan').style.display = 'flex';
-        document.getElementById('bottomSearchWrapper').style.display = 'flex';
+        // 如果不在搜尋模式，才恢復右下角按鈕
+        if(!isSearchMode) {
+            document.getElementById('bottomSearchProxy').style.display = 'flex';
+        }
         currentEditIndex = -1;
         if(isScanning && html5QrCode) html5QrCode.resume();
     }
 
     async function toggleScanner() {
-        exitSearchMode(); // 確保啟動相機時退出搜尋狀態
+        exitSearchMode(); // 確保啟動相機時強制退出搜尋狀態
         const btn = document.getElementById('fabScan');
         const iconCamera = document.getElementById('iconCamera');
         const iconStop = document.getElementById('iconStop');
@@ -599,11 +669,15 @@
     function filterList(val) { renderList(val); window.scrollTo(0, 0); }
     
     function resetAll() { 
-        exitSearchMode();
+        exitSearchMode(); 
         if(confirm('確定清空所有資料？')) { 
             inventoryData = []; 
             localStorage.removeItem('inventoryData_v2');
             document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
+            document.getElementById('mainSearchInput').value = '';
+            document.getElementById('btnClearSearch').style.display = 'none';
+            document.getElementById('proxyText').innerText = '🔍 點此輸入代號...';
+            document.getElementById('proxyText').classList.remove('has-filter');
             renderList(); 
         } 
     }
