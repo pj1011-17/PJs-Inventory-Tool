@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v3.2.0</title>
+    <title>盤點小工具 v3.3.0</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -63,9 +63,13 @@
         .status-block {
             padding: 10px 15px; display: flex; flex-direction: column; justify-content: center;
         }
+        /* 修改此處：增加互動指標 */
         .unfinished-block {
             border-right: 1px solid #eee; min-width: 80px; align-items: center;
+            cursor: pointer; user-select: none; transition: background-color 0.2s;
         }
+        .unfinished-block:active { background-color: #f9fafb; }
+        
         .last-action-block {
             flex: 1; min-width: 0; transition: background-color 0.3s;
         }
@@ -73,7 +77,7 @@
             font-size: 11px; color: #6b7280; font-weight: 700; margin-bottom: 2px; text-transform: uppercase;
         }
         .status-number {
-            font-size: 22px; font-weight: 800; color: var(--danger); line-height: 1;
+            font-size: 22px; font-weight: 800; color: var(--danger); line-height: 1; transition: color 0.3s;
         }
         .status-text {
             font-size: 14px; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; display: block; width: 100%;
@@ -187,7 +191,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v3.2.0</span>
+            <span class="version-badge">v3.3.0</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -199,8 +203,8 @@
     </div>
 
     <div class="status-panel">
-        <div class="status-block unfinished-block">
-            <span class="status-title">未完成</span>
+        <div class="status-block unfinished-block" onclick="toggleFilterMode()">
+            <span class="status-title" id="filterModeTitle">未完成 ⇄</span>
             <span class="status-number" id="unfinishedItems">0</span>
         </div>
         <div class="status-block last-action-block" id="lastScannedBanner">
@@ -287,6 +291,7 @@
     let lastScanTime = 0;
     let currentEditIndex = -1;
     let isSearchMode = false;
+    let filterMode = 'unfinished'; // 新增：狀態追蹤變數 ('unfinished' 或是 'all')
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
@@ -308,6 +313,14 @@
                 }
             } catch (e) { console.error("讀取失敗", e); }
         }
+    }
+
+    // 新增：切換過濾模式的函式
+    function toggleFilterMode() {
+        filterMode = filterMode === 'unfinished' ? 'all' : 'unfinished';
+        updateStats();
+        const mainInput = document.getElementById('mainSearchInput');
+        renderList(mainInput ? mainInput.value : '');
     }
 
     function enterSearchMode(e) {
@@ -368,8 +381,9 @@
             const clickedFab = e.target.closest('#fabScan');
             const clickedModal = e.target.closest('#editModal');
             const clickedProxy = e.target.closest('#bottomSearchProxy');
+            const clickedStatus = e.target.closest('.status-panel'); // 避免點擊切換狀態也關閉搜尋
             
-            if (!clickedTopSearch && !clickedCard && !clickedFab && !clickedModal && !clickedProxy) {
+            if (!clickedTopSearch && !clickedCard && !clickedFab && !clickedModal && !clickedProxy && !clickedStatus) {
                 exitSearchMode();
             }
         });
@@ -473,7 +487,10 @@
             item.name.toLowerCase().includes(filterText.toLowerCase())
         );
         
-        filtered = filtered.filter(item => !(item.counted && item.actQty === item.sysQty));
+        // 修改此處：依據狀態變數決定是否過濾已完成項目
+        if (filterMode === 'unfinished') {
+            filtered = filtered.filter(item => !(item.counted && item.actQty === item.sysQty));
+        }
         
         if (filtered.length === 0) {
             if (filterText.trim() !== '') {
@@ -492,12 +509,16 @@
             let remColor = 'var(--danger)';
             
             if (item.counted) {
-                if (remaining < 0) { statusClass = 'over'; remColor = 'var(--blue)'; }
+                if (remaining === 0) { statusClass = 'done'; remColor = 'var(--success)'; } // 若顯示全部，需要處理 0 差異的顏色
+                else if (remaining < 0) { statusClass = 'over'; remColor = 'var(--blue)'; }
                 else { statusClass = 'error'; }
             }
             
             const div = document.createElement('div');
             div.className = `item-card ${statusClass}`;
+            // 將邊框顏色加上完成的狀態
+            if (statusClass === 'done') div.style.borderLeftColor = 'var(--success)';
+
             div.onclick = () => openEditModal(realIndex);
             div.innerHTML = `
                 <div class="item-info"><h3>${item.name}</h3><p>${item.code}</p></div>
@@ -510,7 +531,25 @@
 
     function updateStats() {
         const unfinished = inventoryData.filter(item => !(item.counted && item.actQty === item.sysQty)).length;
-        document.getElementById('unfinishedItems').innerText = unfinished;
+        const total = inventoryData.length;
+        
+        const numEl = document.getElementById('unfinishedItems');
+        const titleEl = document.getElementById('filterModeTitle');
+        
+        // 修改此處：依據狀態變數動態更新文字和顏色
+        if (filterMode === 'unfinished') {
+            if (titleEl) titleEl.innerText = '未完成 ⇄';
+            if (numEl) {
+                numEl.innerText = unfinished;
+                numEl.style.color = 'var(--danger)';
+            }
+        } else {
+            if (titleEl) titleEl.innerText = '總項目 ⇄';
+            if (numEl) {
+                numEl.innerText = total;
+                numEl.style.color = 'var(--text)';
+            }
+        }
     }
 
     function openEditModal(index) {
@@ -556,7 +595,6 @@
         saveQty(); 
     }
 
-    // 👇 修改：加入儲存後自動清空搜尋並重新喚起鍵盤的邏輯
     function saveQty() {
         if (currentEditIndex === -1) return;
         inventoryData[currentEditIndex].actQty = Number(document.getElementById('modalQty').value);
@@ -567,17 +605,14 @@
         
         const mainInput = document.getElementById('mainSearchInput');
         if (isSearchMode) {
-            // 搜尋模式下：清空搜尋欄、隱藏叉叉按鈕，並重新渲染完整列表
             mainInput.value = '';
             const clearBtn = document.getElementById('btnClearSearch');
             if (clearBtn) clearBtn.style.display = 'none';
             renderList('');
         } else {
-            // 非搜尋模式：保持當下過濾狀態
             renderList(mainInput.value); 
         }
 
-        // 呼叫 closeModal 關閉卡片，其中已包含鍵盤重新喚起的邏輯
         closeModal();
     }
 
@@ -588,11 +623,10 @@
         if (!isSearchMode) {
             document.getElementById('bottomSearchProxy').style.display = 'flex';
         } else {
-            // 👇 新增：在搜尋模式下關閉卡片（或儲存後），主動跳回搜尋框強制喚起鍵盤
             const mainInput = document.getElementById('mainSearchInput');
             if (mainInput) {
                 mainInput.focus();
-                setTimeout(() => { window.scrollTo(0, 0); }, 50); // 確保畫面維持在最頂端
+                setTimeout(() => { window.scrollTo(0, 0); }, 50); 
             }
         }
         
