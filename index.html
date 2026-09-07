@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>盤點小工具 v3.3.0</title>
+    <title>盤點小工具 v3.4.0</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
     <link rel="manifest" href="manifest.json">
@@ -63,7 +63,6 @@
         .status-block {
             padding: 10px 15px; display: flex; flex-direction: column; justify-content: center;
         }
-        /* 修改此處：增加互動指標 */
         .unfinished-block {
             border-right: 1px solid #eee; min-width: 80px; align-items: center;
             cursor: pointer; user-select: none; transition: background-color 0.2s;
@@ -111,7 +110,7 @@
         .bottom-search-proxy {
             position: fixed !important; bottom: calc(36px + env(safe-area-inset-bottom)) !important; 
             left: 96px !important; right: 20px !important; height: 56px;             
-            display: flex; align-items: center; z-index: 99; transform: translateZ(0); 
+            display: flex; align-items: center; z-index: 99; 
             cursor: pointer;
         }
         .bottom-search-proxy-inner {
@@ -132,7 +131,7 @@
             left: 30px !important;      
             width: 56px; height: 56px; border-radius: 50%; background: var(--text); color: white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: none; display: flex; align-items: center; 
-            justify-content: center; z-index: 9999; transform: translateZ(0); padding: 0; 
+            justify-content: center; z-index: 9999; padding: 0; 
         }
         .btn-fab-scan.active { background: var(--danger); padding: 0; }
         .btn-fab-scan:active { transform: scale(0.95); }
@@ -174,7 +173,7 @@
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; opacity: 0; transition: opacity 0.2s; }
         
         .toast { 
-            position: fixed; top: 54%; left: 50%; transform: translate(-50%, -50%); 
+            position: fixed; top: calc(260px + env(safe-area-inset-top)); left: 50%; transform: translate(-50%, -50%); 
             background-color: rgba(0, 0, 0, 0.85); color: white; padding: 12px 24px; 
             border-radius: 30px; font-size: 16px; z-index: 3000; display: none; 
             white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
@@ -191,7 +190,7 @@
     <div class="header">
         <h1>
             📦 盤點小工具 
-            <span class="version-badge">v3.3.0</span>
+            <span class="version-badge">v3.4.0</span>
         </h1>
         <div class="header-tools">
             <label class="btn-tool btn-file-wrapper">
@@ -291,7 +290,7 @@
     let lastScanTime = 0;
     let currentEditIndex = -1;
     let isSearchMode = false;
-    let filterMode = 'unfinished'; // 新增：狀態追蹤變數 ('unfinished' 或是 'all')
+    let filterMode = 'unfinished'; 
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const SYSTEM_COLUMNS = { code: ['產品代號'], name: ['產品名稱'], qty:  ['分倉存量'] };
@@ -309,13 +308,20 @@
                 if (parsedData && parsedData.length > 0) {
                     inventoryData = parsedData;
                     renderList();
+                    
+                    // 👇 新增：自動載入「最後盤點」項目
+                    const savedLastItem = localStorage.getItem('lastScannedItem_v2');
+                    if (savedLastItem) {
+                        const lastItem = JSON.parse(savedLastItem);
+                        updateLastActionBanner(lastItem, true); // 傳入 true 代表不閃爍綠光
+                    }
+                    
                     showToast('🔄 已自動載入上次盤點進度');
                 }
             } catch (e) { console.error("讀取失敗", e); }
         }
     }
 
-    // 新增：切換過濾模式的函式
     function toggleFilterMode() {
         filterMode = filterMode === 'unfinished' ? 'all' : 'unfinished';
         updateStats();
@@ -351,6 +357,9 @@
             proxyText.innerText = '🔍 點此輸入代號...';
             proxyText.classList.remove('has-filter');
         }
+
+        setTimeout(() => { window.scrollTo(window.scrollX, window.scrollY); }, 50);
+        setTimeout(() => { window.scrollTo(window.scrollX, window.scrollY); }, 300);
     }
 
     function clearSearch(e) {
@@ -381,7 +390,7 @@
             const clickedFab = e.target.closest('#fabScan');
             const clickedModal = e.target.closest('#editModal');
             const clickedProxy = e.target.closest('#bottomSearchProxy');
-            const clickedStatus = e.target.closest('.status-panel'); // 避免點擊切換狀態也關閉搜尋
+            const clickedStatus = e.target.closest('.status-panel'); 
             
             if (!clickedTopSearch && !clickedCard && !clickedFab && !clickedModal && !clickedProxy && !clickedStatus) {
                 exitSearchMode();
@@ -419,7 +428,8 @@
         overlay.style.opacity = 1; setTimeout(() => { overlay.style.opacity = 0; }, 300);
     }
 
-    function updateLastActionBanner(item) {
+    // 👇 修改：加入第二個參數 isLoad，控制是否要執行閃爍動畫與寫入儲存
+    function updateLastActionBanner(item, isLoad = false) {
         const bannerText = document.getElementById('lastScannedText');
         if (bannerText) {
             bannerText.innerHTML = '';
@@ -429,10 +439,17 @@
             bannerText.appendChild(codeSpan);
             bannerText.appendChild(document.createTextNode(' ' + item.name));
         }
+        
         const banner = document.getElementById('lastScannedBanner');
-        if (banner) {
+        if (banner && !isLoad) {
             banner.style.backgroundColor = '#e0f2f1'; 
             setTimeout(() => { banner.style.backgroundColor = 'transparent'; }, 300);
+        }
+        
+        // 寫入獨立的 localStorage 鍵值
+        if (!isLoad) {
+            try { localStorage.setItem('lastScannedItem_v2', JSON.stringify({code: item.code, name: item.name})); } 
+            catch (e) { console.error("儲存最後盤點失敗", e); }
         }
     }
 
@@ -464,6 +481,7 @@
                 }).filter(item => item.code !== '');
                 
                 document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
+                localStorage.removeItem('lastScannedItem_v2'); // 👇 新增：匯入新檔案時清空舊紀錄
                 saveToLocalStorage();
                 renderList();
                 
@@ -487,7 +505,6 @@
             item.name.toLowerCase().includes(filterText.toLowerCase())
         );
         
-        // 修改此處：依據狀態變數決定是否過濾已完成項目
         if (filterMode === 'unfinished') {
             filtered = filtered.filter(item => !(item.counted && item.actQty === item.sysQty));
         }
@@ -509,14 +526,13 @@
             let remColor = 'var(--danger)';
             
             if (item.counted) {
-                if (remaining === 0) { statusClass = 'done'; remColor = 'var(--success)'; } // 若顯示全部，需要處理 0 差異的顏色
+                if (remaining === 0) { statusClass = 'done'; remColor = 'var(--success)'; } 
                 else if (remaining < 0) { statusClass = 'over'; remColor = 'var(--blue)'; }
                 else { statusClass = 'error'; }
             }
             
             const div = document.createElement('div');
             div.className = `item-card ${statusClass}`;
-            // 將邊框顏色加上完成的狀態
             if (statusClass === 'done') div.style.borderLeftColor = 'var(--success)';
 
             div.onclick = () => openEditModal(realIndex);
@@ -536,7 +552,6 @@
         const numEl = document.getElementById('unfinishedItems');
         const titleEl = document.getElementById('filterModeTitle');
         
-        // 修改此處：依據狀態變數動態更新文字和顏色
         if (filterMode === 'unfinished') {
             if (titleEl) titleEl.innerText = '未完成 ⇄';
             if (numEl) {
@@ -622,6 +637,7 @@
         
         if (!isSearchMode) {
             document.getElementById('bottomSearchProxy').style.display = 'flex';
+            setTimeout(() => { window.scrollTo(window.scrollX, window.scrollY); }, 50);
         } else {
             const mainInput = document.getElementById('mainSearchInput');
             if (mainInput) {
@@ -728,6 +744,7 @@
         if(confirm('確定清空所有資料？')) { 
             inventoryData = []; 
             localStorage.removeItem('inventoryData_v2');
+            localStorage.removeItem('lastScannedItem_v2'); // 👇 新增：重置時清空最後盤點紀錄
             document.getElementById('lastScannedText').innerText = '尚未盤點任何物品';
             
             const mainInput = document.getElementById('mainSearchInput');
