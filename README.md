@@ -1,6 +1,6 @@
 # 📦 盤點小工具 (Inventory Tool)
 
-![Version](https://img.shields.io/badge/version-2.0-0ABAB5.svg)
+![Version](https://img.shields.io/badge/version-3.0-0ABAB5.svg)
 ![Platform](https://img.shields.io/badge/platform-Mobile%20Web-blue.svg)
 
 一個專為行動裝置與單手操作設計的輕量級網頁盤點工具。完全運行於前端，無需架設後端伺服器，支援 Excel 匯入與條碼掃描，讓庫存盤點變得簡單高效。
